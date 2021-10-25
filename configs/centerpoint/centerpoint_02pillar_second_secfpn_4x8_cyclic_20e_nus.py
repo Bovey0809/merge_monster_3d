@@ -168,3 +168,4 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names))
 
 evaluation = dict(interval=20, pipeline=eval_pipeline)
+
