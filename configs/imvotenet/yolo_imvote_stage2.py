@@ -1,8 +1,7 @@
-
 _base_ = [
     '../_base_/datasets/sunrgbd-3d-10class.py',
     '../_base_/schedules/schedule_3x.py', '../_base_/default_runtime.py',
-    '../_base_/models/imvotenet_image.py'
+    '../_base_/models/imvotenet_image_base_yolo.py'
 ]
 
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
