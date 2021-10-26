@@ -16,7 +16,7 @@ img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 
 model = dict(
-    type="MergeNet",
+    type='MergeNet',
     pts_backbone=dict(
         type='PointNet2SASSG',
         in_channels=4,
@@ -32,6 +32,11 @@ model = dict(
             pool_mod='max',
             use_xyz=True,
             normalize_xyz=True)),
+    middle_encoder=dict(
+        type='SparseEncoderV2',
+        in_channels=4,
+        sparse_shape=[40, 1600, 1408],
+        out_channels=320),
     bbox_head=dict(
         type='Center3DHead',
         num_classes=1,
@@ -56,7 +61,6 @@ model = dict(
         bias_cls=-7.94,
         loss_corner=dict(type='MSELoss', loss_weight=1.0),
     ),
-    # model training and testing settings
     train_cfg=dict(
         pts=dict(
             pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')),
