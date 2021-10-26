@@ -15,11 +15,11 @@ from .ssd3dnet import SSD3DNet
 from .votenet import VoteNet
 from .voxelnet import VoxelNet
 from .centernet3d import CenterNet3D
+from .mergenet import MergeNet
 
 __all__ = [
     'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
     'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',
     'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
-    'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'CenterNet3D'
-    
+    'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'CenterNet3D', 'MergeNet'
 ]

@@ -129,6 +129,7 @@ class ImVoteNet(Base3DDetector):
 
         self.freeze_img_branch = freeze_img_branch
         if freeze_img_branch:
+            
             self.freeze_img_branch_params()
 
         if img_mlp is not None:

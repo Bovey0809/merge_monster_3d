@@ -13,7 +13,9 @@ img_norm_cfg = dict(
 
 model = dict(
     pts_backbone=dict(
+        
         type='PointNet2SASSG',
+        
         in_channels=4,
         num_points=(2048, 1024, 512, 256),
         radius=(0.2, 0.4, 0.8, 1.2),
