@@ -1,7 +1,5 @@
-
 # model settings
 model = dict(
-    type='ImVoteNet',
     img_backbone=dict(
         type='MobileNetV2',
         out_indices=(2, 4, 6),

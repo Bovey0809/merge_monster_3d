@@ -129,7 +129,7 @@ class ImVoteNet(Base3DDetector):
 
         self.freeze_img_branch = freeze_img_branch
         if freeze_img_branch:
-            
+
             self.freeze_img_branch_params()
 
         if img_mlp is not None:
@@ -272,6 +272,7 @@ class ImVoteNet(Base3DDetector):
 
     def extract_img_feat(self, img):
         """Directly extract features from the img backbone+neck."""
+
         if len(img.shape) == 3:
             img = img.unsqueeze(0)
         x = self.img_backbone(img)

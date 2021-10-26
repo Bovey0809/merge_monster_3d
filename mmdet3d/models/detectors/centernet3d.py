@@ -5,6 +5,7 @@ from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.ops import Voxelization
 from mmdet3d.models.middle_encoders import SparseEncoder_AUX
 from mmdet.models import DETECTORS
+
 from .single_stage import SingleStage3DDetector
 from ..import builder
 from mmdet3d.utils import draw_lidar,draw_gt_boxes3d

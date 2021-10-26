@@ -35,7 +35,8 @@ class DynamicVoxelNet(VoxelNet):
             pretrained=pretrained,
             init_cfg=init_cfg)
 
-    def extract_feat(self, points, img_metas):
+    def 
+    extract_feat(self, points, img_metas):
         """Extract features from points."""
         voxels, coors = self.voxelize(points)
         voxel_features, feature_coors = self.voxel_encoder(voxels, coors)

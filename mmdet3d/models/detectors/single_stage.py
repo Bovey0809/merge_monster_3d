@@ -4,7 +4,7 @@ from .base import Base3DDetector
 
 
 @DETECTORS.register_module()
-class SingleStage3DDetector(Base3DDetector):
+class SingleStage3DDetector():
     """SingleStage3DDetector.
 
     This class serves as a base class for single-stage 3D detectors.
