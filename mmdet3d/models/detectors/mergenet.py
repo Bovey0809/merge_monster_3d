@@ -33,6 +33,7 @@ class MergeNet(Base3DDetector):
         self.img_backbone = builder.build_backbone(img_backbone)
         self.img_neck = builder.build_neck(img_neck)
         self.img_bbox_head = builder.build_head(img_bbox_head)
+        self.freeze_img_branch_params()
 
         # Merge Branch(Centernet3d's head)
         bbox_head.update(train_cfg=train_cfg)
@@ -47,13 +48,81 @@ class MergeNet(Base3DDetector):
         "mmdetection3d needs such abstract method."
         pass
 
+    def freeze_img_branch_params(self):
+        """Freeze all image branch parameters."""
+        if self.with_img_bbox_head:
+            for param in self.img_bbox_head.parameters():
+                param.requires_grad = False
+        if self.with_img_backbone:
+            for param in self.img_backbone.parameters():
+                param.requires_grad = False
+        if self.with_img_neck:
+            for param in self.img_neck.parameters():
+                param.requires_grad = False
+        if self.with_img_rpn:
+            for param in self.img_rpn_head.parameters():
+                param.requires_grad = False
+        if self.with_img_roi_head:
+            for param in self.img_roi_head.parameters():
+                param.requires_grad = False
+
+    @property
+    def with_img_bbox(self):
+        """bool: Whether the detector has a 2D image box head."""
+        return ((hasattr(self, 'img_roi_head') and self.img_roi_head.with_bbox)
+                or (hasattr(self, 'img_bbox_head')
+                    and self.img_bbox_head is not None))
+
+    @property
+    def with_img_bbox_head(self):
+        """bool: Whether the detector has a 2D image box head (not roi)."""
+        return hasattr(self,
+                       'img_bbox_head') and self.img_bbox_head is not None
+
+    @property
+    def with_img_backbone(self):
+        """bool: Whether the detector has a 2D image backbone."""
+        return hasattr(self, 'img_backbone') and self.img_backbone is not None
+
+    @property
+    def with_img_neck(self):
+        """bool: Whether the detector has a neck in image branch."""
+        return hasattr(self, 'img_neck') and self.img_neck is not None
+
+    @property
+    def with_img_rpn(self):
+        """bool: Whether the detector has a 2D RPN in image detector branch."""
+        return hasattr(self, 'img_rpn_head') and self.img_rpn_head is not None
+
+    @property
+    def with_img_roi_head(self):
+        """bool: Whether the detector has a RoI Head in image branch."""
+        return hasattr(self, 'img_roi_head') and self.img_roi_head is not None
+
+    @property
+    def with_pts_bbox(self):
+        """bool: Whether the detector has a 3D box head."""
+        return hasattr(self,
+                       'pts_bbox_head') and self.pts_bbox_head is not None
+
+    @property
+    def with_pts_backbone(self):
+        """bool: Whether the detector has a 3D backbone."""
+        return hasattr(self, 'pts_backbone') and self.pts_backbone is not None
+
+    @property
+    def with_pts_neck(self):
+        """bool: Whether the detector has a neck in 3D detector branch."""
+        return hasattr(self, 'pts_neck') and self.pts_neck is not None
+
+    @torch.no_grad()
     def extrac_img_feat(self, img, img_metas=None):
         x = self.img_backbone(img)
         img_features = self.img_neck(x)
-        img_bbox = self.img_bbox_head(x)
+        img_bbox = self.img_bbox_head(img_features)
         return img_features, img_bbox
 
-    def extract_pts_faet(self, points):
+    def extract_pts_feat(self, points):
         x = self.pts_backbone(points)
         seed_points = x['fp_xyz'][-1]
         seed_features = x['fp_features'][-1]
@@ -63,23 +132,23 @@ class MergeNet(Base3DDetector):
 
     def forward_train(self,
                       img,
-                      points,
-                      img_metas,
-                      gt_bboxes,
-                      gt_labels,
-                      gt_bboxes_3d,
-                      gt_labels_3d,
+                      points=None,
+                      img_metas=None,
+                      gt_bboxes=None,
+                      gt_labels=None,
+                      gt_bboxes_3d=None,
+                      gt_labels_3d=None,
                       gt_bboxes_ignore=None):
         # img feature
         img_features, img_bbox = self.extrac_img_feat(img)
 
         # points feature
         points = torch.stack(points)
-        seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(points)
+
+        seeds_3d, seed_3d_features, seed_indices = self.extract_pts_feat(
+            points)
 
         # merge
-        print(img_features.shape, seeds_3d.shape, seed_3d_features.shape,
-              seed_indices)
 
         x = torch.randn(6, 128, 400, 352)
         pred_dict = self.centernet3d_head(x)
