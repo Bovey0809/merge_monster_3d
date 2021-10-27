@@ -206,10 +206,7 @@ class MergeNet(Base3DDetector):
         seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(points)
 
         # merge
-        print(img_features.shape, seeds_3d.shape, seed_3d_features.shape,
-              seed_indices)
-
-        x = torch.randn(6, 128, 400, 352)
+        x, _ = self.extract_voxel_feat(seeds_3d)
         pred_dict = self.centernet3d_head(x)
         bbox_list = self.bbox_head.get_bboxes(pred_dict, img_metas)
         bbox_results = [
