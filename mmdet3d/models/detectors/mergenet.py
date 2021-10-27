@@ -2,6 +2,8 @@
 import numpy as np
 import torch
 import warnings
+import torch.nn.functional as F
+from mmdet3d.ops.voxel.voxelize import Voxelization
 from .single_stage import SingleStage3DDetector
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.models.utils import MLP
@@ -14,10 +16,13 @@ from .base import Base3DDetector
 class MergeNet(Base3DDetector):
 
     def __init__(self,
+                 voxel_layer=None,
+                 voxel_encoder=None,
                  pts_backbone=None,
                  img_backbone=None,
                  img_neck=None,
                  img_bbox_head=None,
+                 backbone=None,
                  middle_encoder=None,
                  bbox_head=None,
                  train_cfg=None,
@@ -38,6 +43,10 @@ class MergeNet(Base3DDetector):
         # Merge Branch(Centernet3d's head)
         bbox_head.update(train_cfg=train_cfg)
         bbox_head.update(test_cfg=test_cfg)
+
+        self.backbone = builder.build_backbone(backbone)
+        self.voxel_layer = Voxelization(**voxel_layer)
+        self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.centernet3d_head = builder.build_head(bbox_head)
 
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
@@ -130,6 +139,37 @@ class MergeNet(Base3DDetector):
 
         return (seed_points, seed_features, seed_indices)
 
+    @torch.no_grad()
+    def voxelize(self, points):
+        """Apply hard voxelization to points."""
+        voxels, coors, num_points = [], [], []
+        for res in points:
+            res_voxels, res_coors, res_num_points = self.voxel_layer(res)
+            voxels.append(res_voxels)
+            coors.append(res_coors)
+            num_points.append(res_num_points)
+        voxels = torch.cat(voxels, dim=0)
+        num_points = torch.cat(num_points, dim=0)
+        coors_batch = []
+        for i, coor in enumerate(coors):
+            coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
+            coors_batch.append(coor_pad)
+        coors_batch = torch.cat(coors_batch, dim=0)
+        return voxels, num_points, coors_batch
+
+    def extract_voxel_feat(self, points):
+        """Extract features from points."""
+        voxels, num_points, coors = self.voxelize(points)
+        voxel_features = self.voxel_encoder(voxels, num_points, coors)
+        batch_size = coors[-1, 0].item() + 1
+        point_misc = None
+        x = self.middle_encoder(voxel_features, coors, batch_size)
+        x = self.backbone(x)
+        # print("x shape",x[0].shape)
+        # if xconv2 is not None:
+        #     x=[x[0]+xconv2]
+        return x, point_misc
+
     def forward_train(self,
                       img,
                       points=None,
@@ -147,8 +187,9 @@ class MergeNet(Base3DDetector):
 
         seeds_3d, seed_3d_features, seed_indices = self.extract_pts_feat(
             points)
+
+        x, _ = self.extract_voxel_feat(seeds_3d)
         # merge
-        x = torch.randn(6, 128, 400, 352)
         pred_dict = self.centernet3d_head(x)
         losses = dict()
         head_loss = self.centernet3d_head.loss(pred_dict, gt_labels_3d,

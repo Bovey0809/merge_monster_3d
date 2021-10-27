@@ -17,10 +17,24 @@ img_norm_cfg = dict(
 
 model = dict(
     type='MergeNet',
+    voxel_layer=dict(
+        max_num_points=1,
+        point_cloud_range=point_cloud_range,
+        voxel_size=voxel_size,
+        max_voxels=(1, 20000)),
+    voxel_encoder=dict(type='HardSimpleVFE'),
+    backbone=dict(
+        type='SECONDFPNDCN',
+        in_channels=128,
+        layer_nums=[3],
+        layer_strides=[1],
+        num_filters=[128],
+        upsample_strides=[2],
+        out_channels=[128]),
     pts_backbone=dict(
         type='PointNet2SASSG',
         in_channels=4,
-        num_points=(2048, 1024, 512, 256), # points for SAMPLER.
+        num_points=(2048, 1024, 512, 256),  # points for SAMPLER.
         radius=(0.2, 0.4, 0.8, 1.2),
         num_samples=(64, 32, 16, 16),
         sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
@@ -39,7 +53,7 @@ model = dict(
         out_channels=320),
     bbox_head=dict(
         type='Center3DHead',
-        num_classes=1,
+        num_classes=num_class,
         in_channels=128,
         feat_channels=128,
         bbox_coder=dict(
@@ -159,6 +173,8 @@ eval_pipeline = [
 ]
 
 data = dict(
+    samples_per_gpu=8,
+    workers_per_gpu=4,
     train=dict(dataset=dict(pipeline=train_pipeline)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))

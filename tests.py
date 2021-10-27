@@ -1,7 +1,7 @@
 from typing import Tuple
 from mmcv import Config
 
-cfg = Config.fromfile('./configs/centernet3d_debug.py')
+cfg = Config.fromfile('./configs/mergenet/merge_net.py')
 
 print(type(cfg.model))
 

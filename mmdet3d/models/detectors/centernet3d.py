@@ -7,8 +7,9 @@ from mmdet3d.models.middle_encoders import SparseEncoder_AUX
 from mmdet.models import DETECTORS
 
 from .single_stage import SingleStage3DDetector
-from ..import builder
-from mmdet3d.utils import draw_lidar,draw_gt_boxes3d
+from .. import builder
+from mmdet3d.utils import draw_lidar, draw_gt_boxes3d
+
 
 @DETECTORS.register_module()
 class CenterNet3D(SingleStage3DDetector):
@@ -40,17 +41,18 @@ class CenterNet3D(SingleStage3DDetector):
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
-        point_misc=None
+        point_misc = None
         # xconv2=None
-        if isinstance(self.middle_encoder,SparseEncoder_AUX):
-            x,point_misc=self.middle_encoder(voxel_features, coors, batch_size)
+        if isinstance(self.middle_encoder, SparseEncoder_AUX):
+            x, point_misc = self.middle_encoder(voxel_features, coors,
+                                                batch_size)
         else:
-            x= self.middle_encoder(voxel_features, coors, batch_size)
+            x = self.middle_encoder(voxel_features, coors, batch_size)
         x = self.backbone(x)
         # print("x shape",x[0].shape)
         # if xconv2 is not None:
         #     x=[x[0]+xconv2]
-        return x,point_misc
+        return x, point_misc
 
     @torch.no_grad()
     def voxelize(self, points):
@@ -100,32 +102,32 @@ class CenterNet3D(SingleStage3DDetector):
         # #
         # gt_corners3d =gt_bboxes_3d[0].corners.cpu().numpy()
         # f = draw_gt_boxes3d(gt_corners3d, f, draw_text=False, show=True)
-        
-        x,point_misc = self.extract_feat(points, img_metas)
 
-        losses=dict()
+        x, point_misc = self.extract_feat(points, img_metas)
+
+        losses = dict()
         if point_misc is not None:
-            aux_loss=self.middle_encoder.aux_loss(*point_misc,gt_bboxes=gt_bboxes_3d)
+            aux_loss = self.middle_encoder.aux_loss(
+                *point_misc, gt_bboxes=gt_bboxes_3d)
             losses.update(aux_loss)
         pred_dict = self.bbox_head(x)
-        head_loss= self.bbox_head.loss(pred_dict,gt_labels_3d,gt_bboxes_3d)
+        head_loss = self.bbox_head.loss(pred_dict, gt_labels_3d, gt_bboxes_3d)
         losses.update(head_loss)
         return losses
 
     def simple_test(self, points, img_metas, imgs=None, rescale=False):
-
         """Test function without augmentaiton."""
-        x,_ = self.extract_feat(points, img_metas)
+        x, _ = self.extract_feat(points, img_metas)
         pred_dict = self.bbox_head(x)
-        bbox_list = self.bbox_head.get_bboxes(pred_dict,img_metas)
+        bbox_list = self.bbox_head.get_bboxes(pred_dict, img_metas)
         # print(len(bbox_list))
         # print(bbox_list[0][3])
         # print(type(bbox_list[0][0]))
         bbox_results = [
-            bbox3d2result(bboxes, scores, labels,img_meta)
+            bbox3d2result(bboxes, scores, labels, img_meta)
             for bboxes, scores, labels, img_meta in bbox_list
         ]
-        return bbox_results #list of dicts
+        return bbox_results  #list of dicts
 
     def aug_test(self, points, img_metas, imgs=None, rescale=False):
         """Test function with augmentaiton."""
