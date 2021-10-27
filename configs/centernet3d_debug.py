@@ -293,8 +293,10 @@ model = dict(
         loss_dim=dict(type='GatherBalancedL1Loss', loss_weight=2.0),
         loss_dir=dict(type='GatherBalancedL1Loss', loss_weight=0.5),
         bias_cls=-7.94,
-        loss_corner=dict(type='MSELoss', loss_weight=1.0)))
-train_cfg = dict()
-test_cfg = dict(score_thr=0.1)
+        loss_corner=dict(type='MSELoss', loss_weight=1.0)),
+    train_cfg=dict(),
+    test_cfg=dict(score_thr=0.1))
+# train_cfg = dict()
+# test_cfg = dict(score_thr=0.1)
 find_unused_parameters = True
 gpu_ids = range(0, 1)

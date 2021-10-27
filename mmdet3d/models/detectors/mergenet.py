@@ -147,9 +147,7 @@ class MergeNet(Base3DDetector):
 
         seeds_3d, seed_3d_features, seed_indices = self.extract_pts_feat(
             points)
-
         # merge
-
         x = torch.randn(6, 128, 400, 352)
         pred_dict = self.centernet3d_head(x)
         losses = dict()
