@@ -75,11 +75,6 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         Center3DBoxCoder.generate_score_map(
             gt_scoremap, gt_labels_3d, boxes_dim2d_scaled * self.bbox_ratio,
             boxes_center_int, self.min_overlap)
-
-        try:
-            corner = gt_bboxes_3d.corner
-        except Exception as e:
-            return None
         gt_corners_3d = gt_bboxes_3d.corners
         gt_corners_2d = gt_corners_3d[:, ::2, :2]  # (num_boxes,4,2)
         gt_corners_2d = gt_corners_2d.reshape(-1, 2)

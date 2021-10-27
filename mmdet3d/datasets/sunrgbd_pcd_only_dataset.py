@@ -34,20 +34,3 @@ class MyDataset(SUNRGBDDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode)
-
-    def get_ann_info(self, index):
-        """Annotation for SUNRGB dataset without empty points labels.
-        
-        Args:
-            index: index of the annotation data to get.
-        
-        Returns:
-            dict: annotation information conssites of the following keys.
-                - gt_bboxes_3d
-                - gt_labels_3d
-                - pts_instance_mask_path
-                - pts_semantic_mask_path
-        """
-        info = self.data_infos[index]
-        if info['annos']['gt_num'] != 0:
-            
