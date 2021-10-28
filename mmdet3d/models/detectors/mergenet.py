@@ -205,16 +205,19 @@ class MergeNet(Base3DDetector):
 
     def simple_test(self, points, img_metas, imgs, rescale=False):
         # img feature
-        img_features, img_bbox = self.extrac_img_feat(imgs)
+        # img_features, img_bbox = self.extrac_img_feat(imgs)
 
         # points feature
-        points = torch.stack(points)
-        seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(points)
+        # points = torch.stack(points)
+        # x, _ = self.extract_voxel_feat(points)
+        # merge
+        # pred_dict = self.centernet3d_head(x)
+        # seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(points)
 
         # merge
-        x, _ = self.extract_voxel_feat(seeds_3d)
+        x, _ = self.extract_voxel_feat(points=points)
         pred_dict = self.centernet3d_head(x)
-        bbox_list = self.bbox_head.get_bboxes(pred_dict, img_metas)
+        bbox_list = self.centernet3d_head.get_bboxes(pred_dict, img_metas)
         bbox_results = [
             bbox3d2result(bboxes, scores, labels, img_meta)
             for bboxes, scores, labels, img_meta in bbox_list
