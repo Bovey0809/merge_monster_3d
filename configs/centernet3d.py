@@ -1,12 +1,11 @@
 # dataset settings
-_base_ = [ './_base_/schedules/cyclic_40e.py',
-    './_base_/default_runtime.py']
+_base_ = ['./_base_/schedules/cyclic_40e.py', './_base_/default_runtime.py']
 dataset_type = 'KittiDataset'
 data_root = '/mmdetection3d/data/kitti/'
 class_names = ['Car']
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-voxel_size=[0.05, 0.05, 0.1]
-num_class=1
+dpoint_cloud_range = [0, -40, -3, 70.4, 40, 1]
+voxel_size = [0.05, 0.05, 0.1]
+num_class = 1
 checkpoint_config = dict(interval=2)
 evaluation = dict(interval=5)
 lr = 0.000225
@@ -151,33 +150,31 @@ model = dict(
         upsample_strides=[2],
         out_channels=[128],
     ),
-
     bbox_head=dict(
         type='Center3DHead',
         num_classes=1,
         in_channels=128,
         feat_channels=128,
-        bbox_coder=dict(type='Center3DBoxCoder',num_class=num_class,
-                        voxel_size=voxel_size,pc_range=point_cloud_range,
-                        num_dir_bins=0,
-                        downsample_ratio=4.0,
-                        min_overlap=0.01,
-                        keypoint_sensitive=True,
-                        ),
-        loss_cls=dict(type='MSELoss',loss_weight=1.0),
-        loss_xy=dict(type='GatherBalancedL1Loss',loss_weight=1.0),
+        bbox_coder=dict(
+            type='Center3DBoxCoder',
+            num_class=num_class,
+            voxel_size=voxel_size,
+            pc_range=point_cloud_range,
+            num_dir_bins=0,
+            downsample_ratio=4.0,
+            min_overlap=0.01,
+            keypoint_sensitive=True,
+        ),
+        loss_cls=dict(type='MSELoss', loss_weight=1.0),
+        loss_xy=dict(type='GatherBalancedL1Loss', loss_weight=1.0),
         loss_z=dict(type='GatherBalancedL1Loss', loss_weight=1.0),
         loss_dim=dict(type='GatherBalancedL1Loss', loss_weight=2.0),
         loss_dir=dict(type='GatherBalancedL1Loss', loss_weight=0.5),
         # loss_decode=dict(type='Boxes3dDecodeLoss', loss_weight=0.5),
         bias_cls=-7.94,
         loss_corner=dict(type='MSELoss', loss_weight=1.0),
-        )
-)
+    ))
 # model training and testing settings
 train_cfg = dict()
-test_cfg = dict(
-    score_thr=0.10,
-)
-find_unused_parameters=True
-
+test_cfg = dict(score_thr=0.10, )
+find_unused_parameters = True

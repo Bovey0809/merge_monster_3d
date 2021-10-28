@@ -8,8 +8,8 @@ class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
 num_class = len(class_names)
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-voxel_size = [0.05, 0.05, 0.1]
+point_cloud_range = [-7, -8, -2, 7.08, 8, 2]  # xyzxyz to voxilize
+voxel_size = [0.01, 0.01, 0.1]  # For Loss and Gt calculation
 
 # use caffe img_norm
 img_norm_cfg = dict(
@@ -18,10 +18,12 @@ img_norm_cfg = dict(
 model = dict(
     type='MergeNet',
     voxel_layer=dict(
-        max_num_points=1,
+        max_num_points=5,
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
-        max_voxels=(1, 20000)),
+        max_voxels=(
+            16000,  # if training, max_voxels[0],
+            20000)),  #  else max_voxels[1]
     voxel_encoder=dict(type='HardSimpleVFE'),
     backbone=dict(
         type='SECONDFPNDCN',
@@ -173,8 +175,8 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=4,
+    samples_per_gpu=2,
+    workers_per_gpu=1,
     train=dict(dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))

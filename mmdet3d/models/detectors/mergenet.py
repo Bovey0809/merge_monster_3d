@@ -180,15 +180,21 @@ class MergeNet(Base3DDetector):
                       gt_labels_3d=None,
                       gt_bboxes_ignore=None):
         # img feature
-        img_features, img_bbox = self.extrac_img_feat(img)
+        # img_features, img_bbox = self.extrac_img_feat(img)
 
         # points feature
-        points = torch.stack(points)
+        # points = torch.stack(points)
 
-        seeds_3d, seed_3d_features, seed_indices = self.extract_pts_feat(
-            points)
+        # seeds_3d, seed_3d_features, seed_indices = self.extract_pts_feat(
+        #     points)
 
-        x, _ = self.extract_voxel_feat(seeds_3d)
+        # x, _ = self.extract_voxel_feat(seeds_3d)
+
+        # For points only.
+        # points = torch.stack(points)
+        # TODO Debug dim change
+        # points = torch.tensor(np.load('./bug_points.npy')).to('cuda')
+        x, _ = self.extract_voxel_feat(points)
         # merge
         pred_dict = self.centernet3d_head(x)
         losses = dict()
