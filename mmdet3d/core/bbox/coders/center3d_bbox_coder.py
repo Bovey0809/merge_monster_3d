@@ -420,7 +420,8 @@ def gather_feature(fmap, index, mask=None, use_transform=False):
     if use_transform:
         # change a (N, C, H, W) tenor to (N, HxW, C) shape
         batch, channel = fmap.shape[:2]
-        fmap = fmap.view(batch, channel, -1).permute((0, 2, 1)).contiguous()
+        fmap = fmap.view(batch, -1, channel)
+        # fmap = fmap.view(batch, channel, -1).permute((0, 2, 1)).contiguous()
 
     dim = fmap.size(-1)
     index = index.unsqueeze(len(index.shape)).expand(*index.shape, dim)

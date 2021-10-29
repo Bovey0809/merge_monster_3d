@@ -165,7 +165,7 @@ class Center3DHead(nn.Module):
             raise NotImplementedError
 
         xy_loss = self.loss_xy(pred_dict["xy_pred"], mask, index,
-                               gt_dict["gt_xyz"][..., :2])
+                                gt_dict["gt_xyz"][..., :2])
         z_loss = self.loss_z(pred_dict["z_pred"], mask, index,
                              gt_dict["gt_xyz"][..., 2:])
         dim_loss = self.loss_dim(pred_dict["dim_pred"], mask, index,

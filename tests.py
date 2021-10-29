@@ -24,4 +24,4 @@ model.eval()
 dataset = dataloader.dataset
 with torch.no_grad():
     for i, data in enumerate(dataloader):
-        result = model(return_loss=False, rescale=True, **data)
+        result = model(return_loss=False, rescale=True, **data) 

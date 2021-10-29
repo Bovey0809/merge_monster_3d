@@ -35,9 +35,12 @@ class MergeNet(Base3DDetector):
             self.pts_backbone = builder.build_backbone(pts_backbone)
 
         # image branch
-        self.img_backbone = builder.build_backbone(img_backbone)
-        self.img_neck = builder.build_neck(img_neck)
-        self.img_bbox_head = builder.build_head(img_bbox_head)
+        if self.with_img_backbone:
+            self.img_backbone = builder.build_backbone(img_backbone)
+        if self.with_img_neck:
+            self.img_neck = builder.build_neck(img_neck)
+        if self.with_img_bbox_head:
+            self.img_bbox_head = builder.build_head(img_bbox_head)
         self.freeze_img_branch_params()
 
         # Merge Branch(Centernet3d's head)
@@ -228,7 +231,7 @@ class MergeNet(Base3DDetector):
         img_features, img_bbox = self.extrac_img_feat(imgs)
 
         aug_bboxes = []
-        for x, img_meta in zip(feats, img_metas):
+        for x, img_meta in zip(img_features, img_metas):
             # points feature
             points = torch.stack(points)
             seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(
