@@ -196,7 +196,7 @@ class MergeNet(Base3DDetector):
         # For points only.
         # points = torch.stack(points)
         # TODO Debug dim change
-        # points = torch.tensor(np.load('./bug_points.npy')).to('cuda')
+        # points = [torch.tensor(np.load('./bug_points.npy')).to('cuda')]
         x, _ = self.extract_voxel_feat(points)
         # merge
         pred_dict = self.centernet3d_head(x)
