@@ -1,6 +1,6 @@
-import pickle
+import numpy as np
+import torch
+fmap = np.load('./fmap.npy')
+index = np.load('./index.npy')
 
-with open('./cuda_error_batch', 'rb') as f:
-    data = pickle.load(f)
-
-print(data)
+torch.tensor(fmap).gather(dim=1, index=torch.tensor(index))
