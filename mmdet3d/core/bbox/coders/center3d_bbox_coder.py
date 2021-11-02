@@ -43,17 +43,27 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         if num_dir_bins > 0:
             self.angle_per_class = (2 * np.pi) / self.num_dir_bins
 
+    def filter_bboxes_labels(self, boxes, labels):
+        '''Return boxes and labels follow the point cloud range.
+
+        Args:
+            boxes(tensor): boxes of shape N x 7.
+            labels(tensor): labels of shape N.
+        
+        Return:
+            boxes and labels after filter.
+        '''
+        
     def generate_target_single(self, gt_labels_3d, gt_bboxes_3d):
 
         # valid_mask=gt_labels>=0
         # gt_labels=gt_labels[valid_mask]
         # print("gt labels is ",gt_labels)
         # gt_bboxes=gt_bboxes[valid_mask]
-        # print("type gt boxes is ",gt_bboxes.shape)   
-        
+        # print("type gt boxes is ",gt_bboxes.shape)
         gt_bboxes_3d = gt_bboxes_3d.to(gt_labels_3d.device)
-
         boxes_tensor = gt_bboxes_3d.tensor
+        boxes_tensor, gt_labels_3d = self.filter_bboxes_labels(boxes_tensor, gt_labels_3d)
         num_boxes = boxes_tensor.shape[0]
         # init gt tensors
         gt_scoremap = gt_labels_3d.new_zeros(
@@ -416,22 +426,18 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
 
-def gather_feature(fmap, index, mask=None, use_transform=False):
-    if use_transform:
-        # change a (N, C, H, W) tenor to (N, HxW, C) shape
-        batch, channel = fmap.shape[:2]
-        fmap = fmap.view(batch, -1, channel)
-        # fmap = fmap.view(batch, channel, -1).permute((0, 2, 1)).contiguous()
-
-    dim = fmap.size(-1)
-    index = index.unsqueeze(len(index.shape)).expand(*index.shape, dim)
-    fmap = fmap.gather(dim=1, index=index)
+def gather_feature(feat, ind, mask=None, use_transform=False):
+    feat = feat.permute(0, 2, 3, 1).contiguous()
+    feat = feat.view(feat.size(0), -1, feat.size(3))
+    dim = feat.size(2)
+    ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
+    feat = feat.gather(dim=1, index=ind)
     if mask is not None:
         # this part is not called in Res18 dcn COCO
-        mask = mask.unsqueeze(2).expand_as(fmap)
-        fmap = fmap[mask]
-        fmap = fmap.reshape(-1, dim)
-    return fmap
+        mask = mask.unsqueeze(2).expand_as(feat)
+        feat = feat[mask]
+        feat = feat.reshape(-1, dim)
+    return feat
 
 
 def _circle_nms(boxes, min_radius, post_max_size=50):
