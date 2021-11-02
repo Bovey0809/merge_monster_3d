@@ -53,6 +53,9 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         Return:
             boxes and labels after filter.
         '''
+        return boxes, labels
+
+
         
     def generate_target_single(self, gt_labels_3d, gt_bboxes_3d):
 

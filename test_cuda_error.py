@@ -28,4 +28,5 @@ dataset = dataloader.dataset
 with open('./cuda_error_batch', 'rb') as f:
     data = pickle.load(f)
 
-result = model(return_loss=True, **data)
+for i, data in tqdm.tqdm(enumerate(dataloader)):
+    result = model(return_loss=True, **data)
