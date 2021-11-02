@@ -215,7 +215,7 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
             bboxes = bboxes[keep]
             # NOTE: change img_meta to img_metas for test.
             # not sure about the influence.
-            bboxes = img_metas['box_type_3d'](bboxes, box_dim=7)
+            bboxes = img_meta['box_type_3d'](bboxes, box_dim=7)
             detection = (bboxes, scores, clses, img_meta)
             detections.append(detection)
         return detections
