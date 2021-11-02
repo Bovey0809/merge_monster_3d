@@ -207,6 +207,8 @@ class MergeNet(Base3DDetector):
         return losses
 
     def simple_test(self, points, img_metas, imgs, rescale=False):
+        """Testing for one img and one point cloud.
+        """
         # img feature
         # img_features, img_bbox = self.extrac_img_feat(imgs)
 
@@ -218,9 +220,9 @@ class MergeNet(Base3DDetector):
         # seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(points)
 
         # merge
-        x, _ = self.extract_voxel_feat(points=points)
+        x, _ = self.extract_voxel_feat(points=[points])
         pred_dict = self.centernet3d_head(x)
-        bbox_list = self.centernet3d_head.get_bboxes(pred_dict, img_metas)
+        bbox_list = self.centernet3d_head.get_bboxes(pred_dict, [img_metas])
         bbox_results = [
             bbox3d2result(bboxes, scores, labels, img_meta)
             for bboxes, scores, labels, img_meta in bbox_list
@@ -228,29 +230,19 @@ class MergeNet(Base3DDetector):
         return bbox_results
 
     def aug_test(self, points, img_metas, imgs, rescale=False):
-        img_features, img_bbox = self.extrac_img_feat(imgs)
-
+        feats, _ = self.extract_voxel_feat(points)
         aug_bboxes = []
-        for x, img_meta in zip(img_features, img_metas):
+        for x, img_meta in zip(feats, img_metas):
             # points feature
-            points = torch.stack(points)
-            seeds_3d, seed_3d_features, seed_indices = self.extrac_pts_feat(
-                points)
-
-            # merge
-            print(img_features.shape, seeds_3d.shape, seed_3d_features.shape,
-                  seed_indices)
-
-            x = torch.randn(6, 128, 400, 352)
-            pred_dict = self.centernet3d_head(x)
-            bbox_list = self.bbox_head.get_bboxes(pred_dict, img_metas)
+            outs = self.centernet3d_head([x])
+            bbox_list = self.centernet3d_head.get_bboxes(outs, img_meta)
             bbox_list = [
                 dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
-                for bboxes, scores, labels in bbox_list
+                for bboxes, scores, labels, img_meta in bbox_list
             ]
             aug_bboxes.append(bbox_list[0])
-        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
-                                            self.bbox_head.test_cfg)
+        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, [[img_meta]],
+                                            self.centernet3d_head.test_cfg)
         return merged_bboxes
 
     def forward_dummy(self, points):

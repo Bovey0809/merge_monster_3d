@@ -44,19 +44,25 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
             self.angle_per_class = (2 * np.pi) / self.num_dir_bins
 
     def filter_bboxes_labels(self, boxes, labels):
-        '''Return boxes and labels follow the point cloud range.
+        '''Judge whether boxes and labels follow the point cloud range.
 
         Args:
             boxes(tensor): boxes of shape N x 7.
             labels(tensor): labels of shape N.
         
         Return:
-            boxes and labels after filter.
+            Boolean.
         '''
-        return boxes, labels
+        out_of_range = None
+        min_value = self.pc_range[:2]
+        max_value = self.pc_range[3:5]
+        xy = boxes[:, :2]
+        if ((xy < min_value).sum() + (xy > max_value).sum()) > 0:
+            out_of_range = True
+        else:
+            out_of_range = False
+        return out_of_range
 
-
-        
     def generate_target_single(self, gt_labels_3d, gt_bboxes_3d):
 
         # valid_mask=gt_labels>=0
@@ -66,7 +72,7 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         # print("type gt boxes is ",gt_bboxes.shape)
         gt_bboxes_3d = gt_bboxes_3d.to(gt_labels_3d.device)
         boxes_tensor = gt_bboxes_3d.tensor
-        boxes_tensor, gt_labels_3d = self.filter_bboxes_labels(boxes_tensor, gt_labels_3d)
+        assert self.filter_bboxes_labels(boxes_tensor, gt_labels_3d) is True
         num_boxes = boxes_tensor.shape[0]
         # init gt tensors
         gt_scoremap = gt_labels_3d.new_zeros(
@@ -150,9 +156,6 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
 
         return gt_dict
 
-    # def encode(self, bboxes, gt_bboxes):
-    #     pass
-    # def decode(self, bbox_out, suffix=''):
     def decode_center(self, pred_dict, img_metas, K=50, score_threshold=0.25):
         r"""
         decode output feature map to detection results
@@ -210,7 +213,9 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
             scores = scores[keep]
             clses = clses[keep]
             bboxes = bboxes[keep]
-            bboxes = img_meta['box_type_3d'](bboxes, box_dim=7)
+            # NOTE: change img_meta to img_metas for test.
+            # not sure about the influence.
+            bboxes = img_metas['box_type_3d'](bboxes, box_dim=7)
             detection = (bboxes, scores, clses, img_meta)
             detections.append(detection)
         return detections
@@ -430,8 +435,14 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
 
 
 def gather_feature(feat, ind, mask=None, use_transform=False):
-    feat = feat.permute(0, 2, 3, 1).contiguous()
-    feat = feat.view(feat.size(0), -1, feat.size(3))
+    '''Gather feature from feature map.
+
+    This utils function is usd for training and testing.
+    For training, the transform is required.
+    '''
+    if use_transform:
+        feat = feat.permute(0, 2, 3, 1).contiguous()
+        feat = feat.view(feat.size(0), -1, feat.size(3))
     dim = feat.size(2)
     ind = ind.unsqueeze(2).expand(ind.size(0), ind.size(1), dim)
     feat = feat.gather(dim=1, index=ind)

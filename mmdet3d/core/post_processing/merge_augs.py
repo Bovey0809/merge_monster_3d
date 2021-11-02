@@ -50,7 +50,7 @@ def merge_aug_bboxes_3d(aug_results, img_metas, test_cfg):
     aug_labels = torch.cat(recovered_labels, dim=0)
 
     # TODO: use a more elegent way to deal with nms
-    if test_cfg.use_rotate_nms:
+    if hasattr(test_cfg, 'use_rotate_nms'):
         nms_func = nms_gpu
     else:
         nms_func = nms_normal_gpu

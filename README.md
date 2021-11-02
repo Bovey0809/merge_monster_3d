@@ -5,4 +5,4 @@ Extract 3D features from PointNet++.
 Combine them as input for CenterNet3D's Head.
 Boom!
 
-## Run pointnet++
+## Basic Usage
