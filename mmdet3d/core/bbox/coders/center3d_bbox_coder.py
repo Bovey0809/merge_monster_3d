@@ -72,7 +72,7 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         # print("type gt boxes is ",gt_bboxes.shape)
         gt_bboxes_3d = gt_bboxes_3d.to(gt_labels_3d.device)
         boxes_tensor = gt_bboxes_3d.tensor
-        assert self.filter_bboxes_labels(boxes_tensor, gt_labels_3d) is True
+        # assert self.filter_bboxes_labels(boxes_tensor, gt_labels_3d) is True
         num_boxes = boxes_tensor.shape[0]
         # init gt tensors
         gt_scoremap = gt_labels_3d.new_zeros(
