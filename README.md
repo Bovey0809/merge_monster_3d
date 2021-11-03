@@ -14,7 +14,7 @@ NOTE: Please download and process the data according to
 git clone https://github.com/Bovey0809/merge_monster_3d.git
 cd merge_monster_3d
 docker build --network=host -f docker/Dockerfile -t mergenet .
-docker run --gpus all --ipc=host -it -v data:/mmdetection3d/data mergenet python tools/train.py configs/mergenet/merge_net.py
+docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/work_dirs/:/mmdetection3d/work_dirs mergenet
 ```
 
 ## TODOS
@@ -46,4 +46,5 @@ docker run --gpus all --ipc=host -it -v data:/mmdetection3d/data mergenet python
     python tools/test.py configs/mergenet/merge_net.py weights/lastest.pth
     ```
 - Multi GPUS()
+
 ### 
