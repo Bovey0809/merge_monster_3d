@@ -5,6 +5,18 @@ Extract 3D features from PointNet++.
 Combine them as input for CenterNet3D's Head.
 Boom!
 
+## Build Env
+
+NOTE: Please download and process the data according to 
+[mmdetction3d dataset prepare](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html).
+
+```bash
+git clone https://github.com/Bovey0809/merge_monster_3d.git
+cd merge_monster_3d
+docker build --network=host -f docker/Dockerfile -t mergenet .
+docker run --gpus all --ipc=host -it -v data:/mmdetection3d/data mergenet python tools/train.py configs/mergenet/merge_net.py
+```
+
 ## TODOS
 
 - [x] PointNet feature extractor.
