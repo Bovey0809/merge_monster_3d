@@ -8,8 +8,8 @@ class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
 num_class = len(class_names)
-point_cloud_range = [-7, -8, -2, 7.08, 8, 2]  # xyzxyz to voxilize
-voxel_size = [0.01, 0.01, 0.1]  # For Loss and Gt calculation
+point_cloud_range = [-7.08, -0.6, -7.5, 7, 9.0, 4.5]  # xyzxyz to voxilize
+voxel_size = [0.01, 0.006, 0.3]  # For Loss and Gt calculation
 
 # use caffe img_norm
 img_norm_cfg = dict(

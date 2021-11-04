@@ -245,5 +245,5 @@ class MergeNet(Base3DDetector):
                                             self.centernet3d_head.test_cfg)
         return merged_bboxes
 
-    def forward_dummy(self, points):
-        return super().forward_dummy(points)
+    def forward_dummy(self, points, img_metas, imgs):
+        pass
