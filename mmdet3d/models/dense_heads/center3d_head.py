@@ -79,10 +79,10 @@ class Center3DHead(nn.Module):
             bias_cls = bias_init_with_prob(0.01)
 
         self.heads = {
-            "center_pred": 1,
+            "center_pred": self.num_class,
             "xy_pred": 2,
             "z_pred": 1,
-            "dim_pred": 3,
+            "dim_pred": 3,  # sin cos
             "dir_pred": 2
         }
         if bbox_coder["num_dir_bins"] > 0:
@@ -91,7 +91,7 @@ class Center3DHead(nn.Module):
             self.heads["dir_pred"] = bbox_coder["num_dir_bins"] * 2
 
         if self.corner_attention:
-            self.heads['corner_pred'] = 1
+            self.heads['corner_pred'] = self.num_class
 
         for head in self.heads:
             classes = self.heads[head]
@@ -165,7 +165,7 @@ class Center3DHead(nn.Module):
             raise NotImplementedError
 
         xy_loss = self.loss_xy(pred_dict["xy_pred"], mask, index,
-                                gt_dict["gt_xyz"][..., :2])
+                               gt_dict["gt_xyz"][..., :2])
         z_loss = self.loss_z(pred_dict["z_pred"], mask, index,
                              gt_dict["gt_xyz"][..., 2:])
         dim_loss = self.loss_dim(pred_dict["dim_pred"], mask, index,

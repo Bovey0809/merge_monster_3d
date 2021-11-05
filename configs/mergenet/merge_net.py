@@ -65,7 +65,7 @@ model = dict(
             pc_range=point_cloud_range,
             num_dir_bins=0,
             downsample_ratio=4.0,
-            min_overlap=0.01,
+            min_overlap=0.001,
             keypoint_sensitive=True,
         ),
         loss_cls=dict(type='MSELoss', loss_weight=1.0),
@@ -187,3 +187,4 @@ data = dict(
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
 gpu_ids = range(0, 2)
+load_from = 'work_dirs/merge_net/72_epochs/merge_net/latest.pth'
