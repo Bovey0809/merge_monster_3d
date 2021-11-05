@@ -6,6 +6,8 @@ import numpy as np
 import torch
 
 from mmdet.core.bbox.builder import BBOX_CODERS
+
+from mmdet3d.core.bbox.structures.depth_box3d import DepthInstance3DBoxes
 from .partial_bin_based_bbox_coder import PartialBinBasedBBoxCoder
 from mmdet3d.core.bbox.structures import LiDARInstance3DBoxes, limit_period
 from mmdet.core import multi_apply
@@ -228,23 +230,23 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         dim_pred = pred_dict['dim_pred']
         xy_pred = pred_dict['xy_pred']
         z_pred = pred_dict['z_pred']
-        dir_pred = pred_dict['dir_pred']
-        batch, channel, height, width = fmap.shape
+        dir_pred = pred_dict['dir_pred']  # direction
+        batch, classes, height, width = fmap.shape
 
         xs = torch.arange(0, width).type_as(fmap)
         ys = torch.arange(0, height).type_as(fmap)
         ys, xs = torch.meshgrid([ys, xs])
         xs = xs.unsqueeze(0).unsqueeze(1).expand(batch, -1, height, width)
         ys = ys.unsqueeze(0).unsqueeze(1).expand(batch, -1, height, width)
-        xs = xy_pred[:, 0:1, :, :] + xs
-        ys = xy_pred[:, 1:, :, :] + ys
+        xs = xy_pred[:, 0, :, :] + xs
+        ys = xy_pred[:, 1, :, :] + ys
         # centers=torch.cat([xs,ys],dim=1).permute(0,2,3,1).contiguous()
         dim_pred = dim_pred / 0.05 / self.downsample_ratio
         zs = z_pred
 
         if self.num_dir_bins <= 0:
             dir_pred = torch.atan2(dir_pred[:, 0:1, :, :], dir_pred[:,
-                                                                    1:, :, :])
+                                                                    1:2, :, :])
         else:
             dir_bin = torch.argmax(
                 dir_pred[:, :self.num_dir_bins, :, :], dim=1, keepdim=True)
@@ -252,6 +254,7 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
                 dir_pred[:, self.num_dir_bins:, :, :], dim=1, index=dir_bin)
             dir_pred = self.class2angle(dir_bin, dir_res)
 
+        # batch predictions
         bboxes_batch = torch.cat([xs, ys, zs, dim_pred, dir_pred],
                                  dim=1).detach()
         bboxes_batch = bboxes_batch.permute(0, 2, 3,
@@ -262,6 +265,8 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
             batch, height, width, 8, 3)
         corners_pred = corners_pred[:, :, :, ::2, :2].reshape(
             batch, height, -1, 2).int().float()
+        
+        # Take xy coordinates.
         centers_pred = boxes_pred_instances.gravity_center.reshape(
             batch, height, width, 3)
         centers_pred = centers_pred[:, :, :, :2].int().float()
@@ -292,20 +297,22 @@ class Center3DBoxCoder(PartialBinBasedBBoxCoder):
         corner_map = pred_dict['corner_pred']
         B, C, H, W = corner_map.shape
         center_points, corner_points = self.decode_boxes(pred_dict)
-        # new_center_map=self.bilinear_interpolate_torch_gridsample(center_map,center_points)
-        # if C == 4:
-        #     new_corner_map=[]
-        #     for i in range(corner_map.shape[0]):
-        #         cur_corner_map=corner_map[i].unsqueeze(1)
-        #         cur_corner_points=corner_points[i].reshape(H,W,4,2).permute(2,0,1,3).contiguous()
-        #         new_corner_map.append(self.bilinear_interpolate_torch_gridsample(cur_corner_map,cur_corner_points).squeeze(1))
-        #     new_corner_map=torch.stack(new_corner_map,dim=0)
-        # else:
-        new_corner_map = self.bilinear_interpolate_torch_gridsample(
-            corner_map, corner_points)
-        new_corner_map = new_corner_map.reshape(B, H, W,
-                                                4).permute(0, 3, 1,
-                                                           2).contiguous()
+        if C != 1:
+            new_corner_map = []
+            for i in range(C):
+                cur_corner_map = corner_map[:, i, ...].unsqueeze(1)
+                cur_corner_points = corner_points[i].reshape(
+                    H, W, 4, 2).permute(2, 0, 1, 3).contiguous()
+                new_corner_map.append(
+                    self.bilinear_interpolate_torch_gridsample(
+                        cur_corner_map, cur_corner_points).squeeze(1))
+            new_corner_map = torch.stack(new_corner_map, dim=0)
+        else:
+            new_corner_map = self.bilinear_interpolate_torch_gridsample(
+                corner_map, corner_points)
+            new_corner_map = new_corner_map.reshape(B, H, W,
+                                                    4).permute(0, 3, 1,
+                                                               2).contiguous()
         new_score_map = (new_corner_map + new_center_map).mean(
             dim=1, keepdim=True)
 
