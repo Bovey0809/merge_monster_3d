@@ -66,7 +66,7 @@ model = dict(
             num_dir_bins=0,
             downsample_ratio=4.0,
             min_overlap=0.001,
-            keypoint_sensitive=True,
+            keypoint_sensitive=False,
         ),
         loss_cls=dict(type='MSELoss', loss_weight=1.0),
         loss_xy=dict(type='GatherBalancedL1Loss', loss_weight=1.0),
