@@ -54,7 +54,12 @@ class COCONanoDetDataset(BaseDataset):
                  use_seg_mask=False,
                  use_keypoint=False,
                  load_mosaic=False,
+                 test_mode=False,
                  mode="train"):
+        if test_mode:
+            mode = "test"
+        else:
+            mode = 'train'
         super().__init__(
             img_path,
             ann_path,
@@ -69,7 +74,7 @@ class COCONanoDetDataset(BaseDataset):
             mode=mode)
         self.CLASSES = CLASSES
         if mode == 'train':
-            self.flag = self._set_group_flag()
+            self._set_group_flag()
 
     def _set_group_flag(self):
         self.flag = np.zeros(len(self), dtype=np.uint8)
