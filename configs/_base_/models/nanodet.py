@@ -1,6 +1,40 @@
 model = dict(
-    img_backbone=dict(
-        type='EfficientNet',
-        model_type='efficientnet-b0', 
-    )
-)
+    type='OneStageDetector',
+    backbone=dict(
+        type='EfficientNetLite',
+        model_type='efficientnet_lite2',
+        out_stage=[1, 2, 4, 6],
+        activation='LeakyReLU',
+        pretrain=True),
+    fpn=dict(
+        type='TAN',
+        in_channels=[48, 120, 352],
+        out_channels=128,
+        feature_hw=[32, 32],
+        num_heads=8,
+        num_encoders=1,
+        mlp_ratio=4,
+        dropout_radio=0.1,
+        activation='LeakyReLU'),
+    head=dict(
+        type='NanoDetHead',
+        num_classes=80,
+        input_channel=128,
+        feat_channels=128,
+        stacked_convs=4,
+        activation='LeakyReLU',
+        share_cls_reg=True,
+        octave_base_scale=5,
+        scales_per_octave=1,
+        strides=[16],
+        reg_max=10,
+        norm_cfg=dict(type='BN'),
+        loss=dict(type='loss_qfl'),
+        head_semantic_stuff=dict(
+            type='SemanticHeadStuff',
+            in_ch32=128,
+            in_ch64=48,
+            in_ch128=24,
+            hidden_ch=256,
+            class_ts=133,
+            droprate=0)))
