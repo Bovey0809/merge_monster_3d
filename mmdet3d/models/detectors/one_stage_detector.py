@@ -15,14 +15,14 @@
 import time
 
 import torch
-import torch.nn as nn
+
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
-from mmcv.runner import BaseModule, auto_fp16
-from mmdet.models.detectors import single_stage, FCOS, SingleStageDetector
+from mmcv.runner import BaseModule
+from mmdet.models.detectors import SingleStageDetector, BaseDetector
 
 
 @DETECTORS.register_module()
-class OneStageDetector(BaseModule):
+class OneStageDetector(BaseDetector):
 
     def __init__(self,
                  backbone,
@@ -41,7 +41,7 @@ class OneStageDetector(BaseModule):
     def extract_feat(self, img):
         return super().extract_feat(img)
 
-    def forward(self, x):
+    def simple_test(self, x):
         x = self.backbone(x)
         feature128 = x[0]
         feature64 = x[1]
@@ -73,13 +73,12 @@ class OneStageDetector(BaseModule):
             # print("decode time: {:.3f}s".format((time.time() - time2)), end=" | ")
         return (preds_box, preds_semantic_stuff)
 
-    def forward_train(self, gt_meta):
-        preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self(
-            gt_meta["img"])
-        loss_box, loss_states_box = self.head.loss(preds_box, gt_meta)
+    def forward(self, img, img_metas, **kwargs):
+        preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self(img)
+        loss_box, loss_states_box = self.head.loss(preds_box, img_metas)
         loss_semantic_stuff, loss_states_semantic_stuff = self.head_semantic_stuff.loss(
             preds_semantic_stuff, preds_semantic_thing_mask,
-            gt_meta["img_semantic_stuff"])
+            img_metas["img_semantic_stuff"])
 
         loss = loss_box + loss_semantic_stuff
 
@@ -98,3 +97,6 @@ class OneStageDetector(BaseModule):
 
         return (preds_box, preds_semantic_stuff,
                 preds_semantic_thing_mask), loss, loss_states
+
+    def aug_test(self, imgs, img_metas, **kwargs):
+        return super().aug_test(imgs, img_metas, **kwargs)

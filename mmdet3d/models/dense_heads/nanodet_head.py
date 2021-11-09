@@ -20,6 +20,7 @@ from ..module.init_weights import normal_init
 from .gfl_head import GFLHead
 from mmdet.models import HEADS
 
+
 @HEADS.register_module()
 class NanoDetHead(GFLHead):
     """
