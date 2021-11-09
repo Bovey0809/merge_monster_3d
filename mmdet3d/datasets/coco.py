@@ -68,6 +68,15 @@ class COCONanoDetDataset(BaseDataset):
             load_mosaic=load_mosaic,
             mode=mode)
         self.CLASSES = CLASSES
+        if mode == 'train':
+            self.flag = self._set_group_flag()
+
+    def _set_group_flag(self):
+        self.flag = np.zeros(len(self), dtype=np.uint8)
+        for i in range(len(self)):
+            img_info = self.data_info[i]
+            if img_info['width'] / img_info['height'] > 1:
+                self.flag[i] = 1
 
     def get_data_info(self, ann_path):
         self.coco_api = COCO(ann_path)
