@@ -17,7 +17,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from torch.utils.data import Dataset
 
-from pipelines import Pipeline
+from .pipelines import Pipeline
 
 
 class BaseDataset(Dataset, metaclass=ABCMeta):

@@ -1,3 +1,4 @@
+from mmdet.models.builder import HEADS
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -89,7 +90,7 @@ class PointwiseConv(nn.Module):
     def forward(self, x):       
         x = self.pointwise(x)
         return x    
-
+@HEADS.register_module()
 class SemanticHeadStuff(nn.Module):
     def __init__(self, in_ch32, in_ch64, in_ch128, hidden_ch, class_ts, droprate):
         super(SemanticHeadStuff, self).__init__()

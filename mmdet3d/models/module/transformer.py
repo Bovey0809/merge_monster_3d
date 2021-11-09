@@ -14,14 +14,18 @@
 
 import torch.nn as nn
 
-from nanodet.model.module.activation import act_layers
-from nanodet.model.module.conv import ConvModule
+from .activation import act_layers
+from .conv import ConvModule
 
 
 class MLP(nn.Module):
-    def __init__(
-        self, in_dim, hidden_dim=None, out_dim=None, drop=0.0, activation="GELU"
-    ):
+
+    def __init__(self,
+                 in_dim,
+                 hidden_dim=None,
+                 out_dim=None,
+                 drop=0.0,
+                 activation="GELU"):
         super(MLP, self).__init__()
         out_dim = out_dim or in_dim
         hidden_dim = hidden_dim or in_dim
@@ -115,15 +119,12 @@ class TransformerBlock(nn.Module):
         assert out_channels // num_heads * num_heads == out_channels
 
         self.conv = (
-            nn.Identity()
-            if in_channels == out_channels
-            else ConvModule(in_channels, out_channels, 1)
-        )
+            nn.Identity() if in_channels == out_channels else ConvModule(
+                in_channels, out_channels, 1))
         self.linear = nn.Linear(out_channels, out_channels)
         encoders = [
-            TransformerEncoder(
-                out_channels, num_heads, mlp_ratio, dropout_ratio, activation, kv_bias
-            )
+            TransformerEncoder(out_channels, num_heads, mlp_ratio,
+                               dropout_ratio, activation, kv_bias)
             for _ in range(num_encoders)
         ]
         self.encoders = nn.Sequential(*encoders)

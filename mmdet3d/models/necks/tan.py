@@ -19,9 +19,10 @@ import torch.nn.functional as F
 from ..module.conv import ConvModule
 from ..module.init_weights import normal_init
 from ..module.transformer import TransformerBlock
-import numpy as np
+from mmdet.models import NECKS
 
 
+@NECKS.register_module()
 class TAN(nn.Module):
     """
     Transformer Attention Network.
