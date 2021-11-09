@@ -187,4 +187,7 @@ data = dict(
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
 gpu_ids = range(0, 2)
-load_from = 'work_dirs/merge_net/72_epochs/merge_net/latest.pth'
+load_from = 'work_dirs/merge_net/epoch_199.pth'
+lr = 0.001
+optimizer = dict(type='Adam', lr=lr)
+
