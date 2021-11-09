@@ -22,7 +22,7 @@ from mmdet.models.detectors import SingleStageDetector, BaseDetector
 
 
 @DETECTORS.register_module()
-class OneStageDetector(BaseDetector):
+class NanoDetMagic(BaseDetector):
 
     def __init__(self,
                  backbone,
@@ -32,7 +32,7 @@ class OneStageDetector(BaseDetector):
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
-        super(OneStageDetector, self).__init__()
+        super(NanoDetMagic, self).__init__()
         self.backbone = build_backbone(backbone)
         self.neck = build_neck(neck)
         self.head = build_head(head)

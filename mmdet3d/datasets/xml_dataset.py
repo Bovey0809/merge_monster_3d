@@ -20,7 +20,7 @@ from collections import defaultdict
 
 from pycocotools.coco import COCO
 
-from .coco import CocoDataset
+from .coco import COCONanoDetDataset
 
 
 def get_file_list(path, type=".xml"):
@@ -53,7 +53,7 @@ class CocoXML(COCO):
         self.createIndex()
 
 
-class XMLDataset(CocoDataset):
+class XMLDataset(COCONanoDetDataset):
     def __init__(self, class_names, **kwargs):
         self.class_names = class_names
         super(XMLDataset, self).__init__(**kwargs)

@@ -14,15 +14,18 @@
 
 import functools
 
+from mmdet.datasets.builder import PIPELINES
+
 from .color import color_aug_and_norm
 from .warp import warp_and_resize
 
 
+@PIPELINES.register_module()
 class Pipeline:
+
     def __init__(self, cfg, keep_ratio):
         self.warp = functools.partial(
-            warp_and_resize, warp_kwargs=cfg, keep_ratio=keep_ratio
-        )
+            warp_and_resize, warp_kwargs=cfg, keep_ratio=keep_ratio)
         self.color = functools.partial(color_aug_and_norm, kwargs=cfg)
 
     def __call__(self, meta, dst_shape):

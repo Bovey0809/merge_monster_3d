@@ -1,5 +1,5 @@
 model = dict(
-    type='OneStageDetector',
+    type='NanoDetMagic',
     backbone=dict(
         type='EfficientNetLite',
         model_name='efficientnet_lite2',
