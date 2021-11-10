@@ -15,6 +15,7 @@
 import random
 
 import cv2
+from mmdet.datasets.builder import PIPELINES
 import numpy as np
 
 

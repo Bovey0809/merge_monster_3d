@@ -12,23 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import functools
+import os
 
-from mmdet.datasets.builder import PIPELINES
+import cv2
+import numpy as np
+import torch
+from pycocotools.coco import COCO
 
-from .color import color_aug_and_norm
-from .warp import warp_and_resize
+from .base import BaseDataset
+from PIL import Image
+from mmdet.datasets import DATASETS, CustomDataset, CocoPanopticDataset
+from .custom_3d import Custom3DDataset
 
 
-@PIPELINES.register_module()
-class NanodetPipeline:
+@DATASETS.register_module()
+class COCONanoDetDataset(CustomDataset):
 
-    def __init__(self, cfg, keep_ratio):
-        self.warp = functools.partial(
-            warp_and_resize, warp_kwargs=cfg, keep_ratio=keep_ratio)
-        self.color = functools.partial(color_aug_and_norm, kwargs=cfg)
-
-    def __call__(self, meta, dst_shape):
-        meta = self.warp(meta=meta, dst_shape=dst_shape)
-        meta = self.color(meta=meta)
-        return meta
+    def pre_pipeline(self, results):
+        print('results')
+        return super().pre_pipeline(results)

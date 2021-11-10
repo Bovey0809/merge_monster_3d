@@ -17,7 +17,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from torch.utils.data import Dataset
 
-from .pipelines import Pipeline
+from .pipelines import NanodetPipeline
 
 
 class BaseDataset(Dataset, metaclass=ABCMeta):
@@ -61,7 +61,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         self.ann_path = ann_path
         self.sem_img_path = sem_img_path
         self.input_size = input_size
-        self.pipeline = Pipeline(pipeline, keep_ratio)
+        self.pipeline = NanodetPipeline(pipeline, keep_ratio)
         self.keep_ratio = keep_ratio
         self.use_instance_mask = use_instance_mask
         self.use_seg_mask = use_seg_mask

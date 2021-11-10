@@ -16,6 +16,7 @@ import math
 import random
 
 import cv2
+from mmdet.datasets.builder import PIPELINES
 import numpy as np
 
 
@@ -33,8 +34,10 @@ def get_perspective_matrix(perspective=0):
     :return:
     """
     P = np.eye(3)
-    P[2, 0] = random.uniform(-perspective, perspective)  # x perspective (about y)
-    P[2, 1] = random.uniform(-perspective, perspective)  # y perspective (about x)
+    P[2, 0] = random.uniform(-perspective,
+                             perspective)  # x perspective (about y)
+    P[2, 1] = random.uniform(-perspective,
+                             perspective)  # y perspective (about x)
     return P
 
 
@@ -81,12 +84,10 @@ def get_shear_matrix(degree):
     :return:
     """
     Sh = np.eye(3)
-    Sh[0, 1] = math.tan(
-        random.uniform(-degree, degree) * math.pi / 180
-    )  # x shear (deg)
-    Sh[1, 0] = math.tan(
-        random.uniform(-degree, degree) * math.pi / 180
-    )  # y shear (deg)
+    Sh[0, 1] = math.tan(random.uniform(-degree, degree) * math.pi /
+                        180)  # x shear (deg)
+    Sh[1, 0] = math.tan(random.uniform(-degree, degree) * math.pi /
+                        180)  # y shear (deg)
     return Sh
 
 
@@ -97,8 +98,10 @@ def get_translate_matrix(translate, width, height):
     :return:
     """
     T = np.eye(3)
-    T[0, 2] = random.uniform(0.5 - translate, 0.5 + translate) * width  # x translation
-    T[1, 2] = random.uniform(0.5 - translate, 0.5 + translate) * height  # y translation
+    T[0, 2] = random.uniform(0.5 - translate,
+                             0.5 + translate) * width  # x translation
+    T[1, 2] = random.uniform(0.5 - translate,
+                             0.5 + translate) * height  # y translation
     return T
 
 
@@ -142,7 +145,7 @@ def warp_and_resize(meta, warp_kwargs, dst_shape, keep_ratio=True):
     width = raw_img.shape[1]
 
     # add semantic stuff and thing
-    raw_semantic_stuff = meta["img_semantic_stuff"] 
+    raw_semantic_stuff = meta["img_semantic_stuff"]
     assert raw_img.shape[0] == raw_semantic_stuff.shape[0]
     assert raw_img.shape[1] == raw_semantic_stuff.shape[1]
 
@@ -178,20 +181,29 @@ def warp_and_resize(meta, warp_kwargs, dst_shape, keep_ratio=True):
     # M = T @ Sh @ R @ Str @ P @ C
     ResizeM = get_resize_matrix((width, height), dst_shape, keep_ratio)
     M = ResizeM @ M
-    img = cv2.warpPerspective(raw_img, M, dsize=tuple(dst_shape)) #, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
+    img = cv2.warpPerspective(
+        raw_img, M, dsize=tuple(dst_shape)
+    )  #, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
     meta["img"] = img
     meta["warp_matrix"] = M
 
-    # add semantic stuff and thing        
-    img_semantic_stuff = cv2.warpPerspective(raw_semantic_stuff, M, dsize=tuple(dst_shape), flags=0, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
+    # add semantic stuff and thing
+    img_semantic_stuff = cv2.warpPerspective(
+        raw_semantic_stuff,
+        M,
+        dsize=tuple(dst_shape),
+        flags=0,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(255, 255, 255))
     meta["img_semantic_stuff"] = img_semantic_stuff
-    
+
     if "gt_bboxes" in meta:
         boxes = meta["gt_bboxes"]
         meta["gt_bboxes"] = warp_boxes(boxes, M, dst_shape[0], dst_shape[1])
     if "gt_masks" in meta:
         for i, mask in enumerate(meta["gt_masks"]):
-            meta["gt_masks"][i] = cv2.warpPerspective(mask, M, dsize=tuple(dst_shape))
+            meta["gt_masks"][i] = cv2.warpPerspective(
+                mask, M, dsize=tuple(dst_shape))
 
     # TODO: keypoints
     # if 'gt_keypoints' in meta:
@@ -205,14 +217,14 @@ def warp_boxes(boxes, M, width, height):
         # warp points
         xy = np.ones((n * 4, 3))
         xy[:, :2] = boxes[:, [0, 1, 2, 3, 0, 3, 2, 1]].reshape(
-            n * 4, 2
-        )  # x1y1, x2y2, x1y2, x2y1
+            n * 4, 2)  # x1y1, x2y2, x1y2, x2y1
         xy = xy @ M.T  # transform
         xy = (xy[:, :2] / xy[:, 2:3]).reshape(n, 8)  # rescale
         # create new boxes
         x = xy[:, [0, 2, 4, 6]]
         y = xy[:, [1, 3, 5, 7]]
-        xy = np.concatenate((x.min(1), y.min(1), x.max(1), y.max(1))).reshape(4, n).T
+        xy = np.concatenate(
+            (x.min(1), y.min(1), x.max(1), y.max(1))).reshape(4, n).T
         # clip boxes
         xy[:, [0, 2]] = xy[:, [0, 2]].clip(0, width)
         xy[:, [1, 3]] = xy[:, [1, 3]].clip(0, height)

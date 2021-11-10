@@ -439,8 +439,10 @@ class GFLHead(nn.Module):
         :return: Assign results of a single image
         """
         device = grid_cells.device
-        gt_bboxes = torch.from_numpy(gt_bboxes).to(device)
-        gt_labels = torch.from_numpy(gt_labels).to(device)
+        if isinstance(gt_bboxes, np.ndarray):
+            gt_bboxes = torch.from_numpy(gt_bboxes).to(device)
+        if isinstance(gt_labels, np.ndarray):
+            gt_labels = torch.from_numpy(gt_labels).to(device)
 
         assign_result = self.assigner.assign(grid_cells, num_level_cells,
                                              gt_bboxes, gt_bboxes_ignore,

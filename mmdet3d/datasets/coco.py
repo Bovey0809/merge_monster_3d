@@ -23,25 +23,25 @@ from .base import BaseDataset
 from PIL import Image
 from mmdet.datasets import DATASETS
 
-CLASSES = [
-    'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train',
-    'truck', 'boat', 'traffic_light', 'fire_hydrant', 'stop_sign',
-    'parking_meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
-    'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag',
-    'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports_ball', 'kite',
-    'baseball_bat', 'baseball_glove', 'skateboard', 'surfboard',
-    'tennis_racket', 'bottle', 'wine_glass', 'cup', 'fork', 'knife', 'spoon',
-    'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
-    'hot_dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted_plant',
-    'bed', 'dining_table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-    'keyboard', 'cell_phone', 'microwave', 'oven', 'toaster', 'sink',
-    'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy_bear',
-    'hair_drier', 'toothbrush'
-]
+CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+           'train', 'truck', 'boat', 'traffic_light', 'fire_hydrant',
+           'stop_sign', 'parking_meter', 'bench', 'bird', 'cat', 'dog',
+           'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
+           'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+           'skis', 'snowboard', 'sports_ball', 'kite', 'baseball_bat',
+           'baseball_glove', 'skateboard', 'surfboard', 'tennis_racket',
+           'bottle', 'wine_glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
+           'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+           'hot_dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+           'potted_plant', 'bed', 'dining_table', 'toilet', 'tv', 'laptop',
+           'mouse', 'remote', 'keyboard', 'cell_phone', 'microwave', 'oven',
+           'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase',
+           'scissors', 'teddy_bear', 'hair_drier', 'toothbrush')
 
 
 @DATASETS.register_module()
 class COCONanoDetDataset(BaseDataset):
+    CLASSES = CLASSES
 
     def __init__(self,
                  img_path,
@@ -72,7 +72,6 @@ class COCONanoDetDataset(BaseDataset):
             use_keypoint=use_keypoint,
             load_mosaic=load_mosaic,
             mode=mode)
-        self.CLASSES = CLASSES
         if mode == 'train':
             self._set_group_flag()
 
@@ -177,7 +176,7 @@ class COCONanoDetDataset(BaseDataset):
                 "Cant load image! Please check image path!")
         meta = dict(
             img=img,
-            img_info=img_info,
+            # img_info=img_info,
             gt_bboxes=ann["bboxes"],
             gt_labels=ann["labels"])
 
@@ -193,7 +192,7 @@ class COCONanoDetDataset(BaseDataset):
         img = img + 79
         img[img == 78] = 255
 
-        ### load semantic thing individual
+        # load semantic thing individual
         n = len(ann['masks'])
         for i in range(n):
             img[ann['masks'][i] == 1] = ann["labels"][i]

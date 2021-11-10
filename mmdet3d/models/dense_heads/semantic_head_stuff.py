@@ -194,7 +194,7 @@ class SemanticHeadStuff(nn.Module):
 
     def loss(self, preds, preds_thing_mask, gt):
         b, c, h, w = preds.size()
-
+        
         gt = F.interpolate(gt, size=[h, w], mode="nearest")  # 128
         gt = gt.to(dtype=torch.int64)  # convert from float32 to int64
         gt = gt.permute(0, 2, 3, 1)  # size = [b, h, w, 1]

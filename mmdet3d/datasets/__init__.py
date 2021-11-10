@@ -26,7 +26,7 @@ from .sunrgbd_dataset import SUNRGBDDataset
 from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 from .sunrgbd_pcd_only_dataset import MyDataset
-from .coco import COCONanoDetDataset
+from .coco_nanodet import COCONanoDetDataset
 
 __all__ = [
     'KittiDataset', 'KittiMonoDataset', 'build_dataloader', 'DATASETS',

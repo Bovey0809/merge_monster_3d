@@ -41,7 +41,7 @@ class NanoDetMagic(BaseDetector):
     def extract_feat(self, img):
         return super().extract_feat(img)
 
-    def simple_test(self, x):
+    def _forward(self, x):
         x = self.backbone(x)
         feature128 = x[0]
         feature64 = x[1]
@@ -50,6 +50,9 @@ class NanoDetMagic(BaseDetector):
         x_semantic_stuff, x_semantic_thing_mask = self.head_semantic_stuff(
             x[0], feature64, feature128)
         return x_box, x_semantic_stuff, x_semantic_thing_mask
+
+    def simple_test(self, x):
+        return self._forward(x)
 
     def inference(self, meta, class_names):
         with torch.no_grad():
@@ -73,12 +76,12 @@ class NanoDetMagic(BaseDetector):
             # print("decode time: {:.3f}s".format((time.time() - time2)), end=" | ")
         return (preds_box, preds_semantic_stuff)
 
-    def forward(self, img, img_metas, **kwargs):
-        preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self(img)
-        loss_box, loss_states_box = self.head.loss(preds_box, img_metas)
+    def forward(self, img, img_metas, **gt):
+        preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self._forward(img)
+        loss_box, loss_states_box = self.head.loss(preds_box, gt)
         loss_semantic_stuff, loss_states_semantic_stuff = self.head_semantic_stuff.loss(
             preds_semantic_stuff, preds_semantic_thing_mask,
-            img_metas["img_semantic_stuff"])
+            gt["gt_masks"])
 
         loss = loss_box + loss_semantic_stuff
 
