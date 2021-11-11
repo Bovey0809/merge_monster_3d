@@ -12,6 +12,8 @@ train_pipeline = [
     dict(
         type='LoadAnnotations', with_bbox=True, with_mask=True, with_seg=True),
     dict(type='SemanticStuff'),
+    dict(type='WarpResize', size=(512, 512)),
+    dict(type='ColorAugNorm'),
     dict(type='Resize', img_scale=(512, 512), keep_ratio=False),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
@@ -45,18 +47,18 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/instances_train2017.json',
         img_prefix=data_root + 'train2017/',
-        seg_prefix=data_root + 'panoptic_train2017/',
+        seg_prefix=data_root + 'panoptic_stuff_train2017/',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/instances_val2017.json',
         img_prefix=data_root + 'val2017/',
-        seg_prefix=data_root + 'panoptic_val2017/',
+        seg_prefix=data_root + 'panoptic_stuff_val2017/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/instances_val2017.json',
         img_prefix=data_root + 'val2017/',
-        seg_prefix=data_root + 'panoptic_val2017/',
+        seg_prefix=data_root + 'panoptic_stuff_val2017/',
         pipeline=test_pipeline))
 evaluation = dict(metric=['bbox', 'segm', 'PQ'], interval=1)

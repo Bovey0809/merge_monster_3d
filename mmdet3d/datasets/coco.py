@@ -180,14 +180,16 @@ class COCONanoDetDataset(BaseDataset):
             gt_bboxes=ann["bboxes"],
             gt_labels=ann["labels"])
 
-        ### load semantic stuff
+        # load semantic stuff
         image_path = os.path.join(self.sem_img_path, file_name[:-3] + 'png')
         img = np.array(Image.open(image_path))
         if img is None:
             print("semantic image {} read failed.".format(image_path))
             raise FileNotFoundError(
                 "Cant load semantic image! Please check semantic image path!")
-
+        
+        # PIL 读取的 int8 格式. 
+        # 79: classes related
         img[img == 0] = 255
         img = img + 79
         img[img == 78] = 255

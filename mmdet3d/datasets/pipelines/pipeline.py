@@ -18,16 +18,61 @@ from mmdet.datasets.builder import PIPELINES
 
 from .color import color_aug_and_norm
 from .warp import warp_and_resize
+import cv2
+import numpy as np
+
+
+@PIPELINES.register_module()
+class ColorAugNorm(object):
+    pass
+
+
+@PIPELINES.register_module()
+class WarpResize(object):
+
+    def __init__(self, size, warp_kwargs: dict) -> None:
+        self.dst_shape = size
+        self.warp_kwargs = warp_kwargs
+
+    def __call__(self, input_dict: dict) -> dict:
+        input_dict = warp_and_resize(
+            input_dict, self.warp_kwargs, self.size, keep_ratio=True)
+        return input_dict
+
+    def __repr__(self) -> str:
+        return super().__repr__()
 
 
 @PIPELINES.register_module()
 class SemanticStuff(object):
+    """Semantic Stuff followed by LianFeng's magic nanodet.
+    """
 
     def __init__(self) -> None:
         super().__init__()
 
+    def _create_seg(self, img, ann):
+        """Create segmantic for img.
+
+        Args:
+            img (np.array): hxw read from file.
+        """
+
+        img[img == 0] = 255
+        img = img + 79
+        img[img == 78] = 255
+
+        n = len(ann['masks'])
+        # TODO: Need optimization.
+        for i in range(n):
+            img[ann['masks'][i] == 1] = ann['labels'][i]
+        return img
+
     def __call__(self, input_dict):
-        print(input_dict)
+        seg_img = input_dict['gt_semantic_seg']
+        ann = input_dict['ann_info']
+        seg_img = self._create_seg(seg_img, ann)
+        input_dict['img_semantic_stuff'] = seg_img
         return input_dict
 
     def __repr__(self) -> str:
