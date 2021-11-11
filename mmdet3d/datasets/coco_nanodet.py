@@ -27,7 +27,5 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class COCONanoDetDataset(CocoDataset):
-
-    def pre_pipeline(self, results):
-        print('results')
-        return super().pre_pipeline(results)
+    # Get the img & add "img_semantic_stuff" field.
+    pass

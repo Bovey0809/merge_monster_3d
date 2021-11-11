@@ -21,6 +21,22 @@ from .warp import warp_and_resize
 
 
 @PIPELINES.register_module()
+class SemanticStuff(object):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def __call__(self, input_dict):
+        print(input_dict)
+        return input_dict
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'Generate Semantic filed.'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class NanodetPipeline:
 
     def __init__(self, cfg, keep_ratio):
