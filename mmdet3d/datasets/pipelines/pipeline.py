@@ -26,7 +26,17 @@ import numpy as np
 class ColorAugNorm(object):
     """Color and Norm
     """
-    
+
+    def __init__(self, **kwargs) -> None:
+        self.kwargs = kwargs
+
+    def __call__(self, input_dict):
+        meta = color_aug_and_norm(input_dict, kwargs=self.kwargs)
+        return meta
+
+    def __repr__(self) -> str:
+        return super().__repr__()
+
 
 @PIPELINES.register_module()
 class WarpResize(object):
