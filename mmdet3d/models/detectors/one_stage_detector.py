@@ -77,11 +77,14 @@ class NanoDetMagic(BaseDetector):
         return (preds_box, preds_semantic_stuff)
 
     def forward(self, img, img_metas, **gt):
-        preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self._forward(img)
+        device = img.device
+        preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self._forward(
+            img)
         loss_box, loss_states_box = self.head.loss(preds_box, gt)
+        gt_masks = torch.cat(
+            [i.to_tensor(torch.float32, device) for i in gt['gt_masks']])
         loss_semantic_stuff, loss_states_semantic_stuff = self.head_semantic_stuff.loss(
-            preds_semantic_stuff, preds_semantic_thing_mask,
-            gt["gt_masks"])
+            preds_semantic_stuff, preds_semantic_thing_mask, gt_masks)
 
         loss = loss_box + loss_semantic_stuff
 
