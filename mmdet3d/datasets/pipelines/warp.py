@@ -18,6 +18,7 @@ import random
 import cv2
 from mmdet.datasets.builder import PIPELINES
 import numpy as np
+from mmdet.core.mask.structures import BitmapMasks
 
 
 def get_flip_matrix(prob=0.5):
@@ -201,9 +202,11 @@ def warp_and_resize(meta, warp_kwargs, dst_shape, keep_ratio=True):
         boxes = meta["gt_bboxes"]
         meta["gt_bboxes"] = warp_boxes(boxes, M, dst_shape[0], dst_shape[1])
     if "gt_masks" in meta:
+        tmp_masks = []
         for i, mask in enumerate(meta["gt_masks"]):
-            meta["gt_masks"][i] = cv2.warpPerspective(
-                mask, M, dsize=tuple(dst_shape))
+            # NOTE: BitmapMasks can't be assigned by matrix. 
+            tmp_masks.append(cv2.warpPerspective(mask, M, dsize=dst_shape))
+        meta['gt_masks'] = BitmapMasks(tmp_masks, *dst_shape)
 
     # TODO: keypoints
     # if 'gt_keypoints' in meta:

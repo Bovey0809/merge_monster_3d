@@ -24,11 +24,16 @@ import numpy as np
 
 @PIPELINES.register_module()
 class ColorAugNorm(object):
-    pass
-
+    """Color and Norm
+    """
+    
 
 @PIPELINES.register_module()
 class WarpResize(object):
+    """Warp and Resize follow Nanodet.
+
+    Note: Details are different, gt_masks will be changed during this warp.
+    """
 
     def __init__(self, size, **warp_kwargs) -> None:
         self.dst_shape = size
@@ -36,7 +41,7 @@ class WarpResize(object):
 
     def __call__(self, input_dict: dict) -> dict:
         input_dict = warp_and_resize(
-            input_dict, self.warp_kwargs, self.size, keep_ratio=True)
+            input_dict, self.warp_kwargs, self.dst_shape, keep_ratio=True)
         return input_dict
 
     def __repr__(self) -> str:
@@ -46,6 +51,8 @@ class WarpResize(object):
 @PIPELINES.register_module()
 class SemanticStuff(object):
     """Semantic Stuff followed by LianFeng's magic nanodet.
+    
+    Note: The implementation is follwing Nanodet. But details are different.
     """
 
     def __init__(self) -> None:
