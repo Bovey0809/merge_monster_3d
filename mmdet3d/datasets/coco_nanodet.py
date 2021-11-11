@@ -21,12 +21,12 @@ from pycocotools.coco import COCO
 
 from .base import BaseDataset
 from PIL import Image
-from mmdet.datasets import DATASETS, CustomDataset, CocoPanopticDataset
+from mmdet.datasets import DATASETS, CustomDataset, CocoPanopticDataset, CocoDataset
 from .custom_3d import Custom3DDataset
 
 
 @DATASETS.register_module()
-class COCONanoDetDataset(CustomDataset):
+class COCONanoDetDataset(CocoDataset):
 
     def pre_pipeline(self, results):
         print('results')
