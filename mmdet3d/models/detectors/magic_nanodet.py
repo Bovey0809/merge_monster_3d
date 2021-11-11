@@ -15,7 +15,7 @@
 import time
 
 import torch
-
+import numpy as np
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from mmcv.runner import BaseModule
 from mmdet.models.detectors import SingleStageDetector, BaseDetector
@@ -81,8 +81,7 @@ class NanoDetMagic(BaseDetector):
         preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self._forward(
             img)
         loss_box, loss_states_box = self.head.loss(preds_box, gt)
-        gt_masks = torch.cat(
-            [i.to_tensor(torch.float32, device) for i in gt['gt_masks']])
+        gt_masks = gt['img_semantic_stuff'].to(device)
         loss_semantic_stuff, loss_states_semantic_stuff = self.head_semantic_stuff.loss(
             preds_semantic_stuff, preds_semantic_thing_mask, gt_masks)
 
@@ -100,9 +99,9 @@ class NanoDetMagic(BaseDetector):
 
             # ThingMask_Dice=loss_states_semantic_stuff['Dice_Loss_thing_mask'],
             Thing_Mask=loss_states_semantic_stuff['Focal_Loss_thing_mask'])
-
-        return (preds_box, preds_semantic_stuff,
-                preds_semantic_thing_mask), loss, loss_states
+        return loss_states
+        # return (preds_box, preds_semantic_stuff,
+        #         preds_semantic_thing_mask), loss, loss_states
 
     def aug_test(self, imgs, img_metas, **kwargs):
         return super().aug_test(imgs, img_metas, **kwargs)

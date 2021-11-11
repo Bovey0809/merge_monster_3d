@@ -16,7 +16,8 @@ from .votenet import VoteNet
 from .voxelnet import VoxelNet
 from .centernet3d import CenterNet3D
 from .mergenet import MergeNet
-from .one_stage_detector import NanoDetMagic
+from .magic_nanodet import NanoDetMagic
+
 __all__ = [
     'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
     'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',

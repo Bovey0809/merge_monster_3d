@@ -26,6 +26,7 @@ from .custom_3d import Custom3DDataset
 
 
 @DATASETS.register_module()
-class COCONanoDetDataset(CocoDataset):
+class CocoNanoDetDataset(CocoDataset):
     # Get the img & add "img_semantic_stuff" field.
-    pass
+    def get_img_annotation(self, idx):
+        pass

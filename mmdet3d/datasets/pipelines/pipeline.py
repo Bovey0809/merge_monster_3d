@@ -18,8 +18,6 @@ from mmdet.datasets.builder import PIPELINES
 
 from .color import color_aug_and_norm
 from .warp import warp_and_resize
-import cv2
-import numpy as np
 
 
 @PIPELINES.register_module()
