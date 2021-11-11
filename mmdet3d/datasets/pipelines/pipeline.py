@@ -30,7 +30,7 @@ class ColorAugNorm(object):
 @PIPELINES.register_module()
 class WarpResize(object):
 
-    def __init__(self, size, warp_kwargs: dict) -> None:
+    def __init__(self, size, **warp_kwargs) -> None:
         self.dst_shape = size
         self.warp_kwargs = warp_kwargs
 
