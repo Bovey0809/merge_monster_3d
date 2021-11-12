@@ -27,7 +27,7 @@ class NanoDetMagic(BaseDetector):
     def __init__(self,
                  img_backbone,
                  img_neck=None,
-                 img_head=None,
+                 img_bbox_head=None,
                  head_semantic_stuff=None,
                  train_cfg=None,
                  test_cfg=None,
@@ -35,20 +35,21 @@ class NanoDetMagic(BaseDetector):
         super(NanoDetMagic, self).__init__()
         self.backbone = build_backbone(img_backbone)
         self.neck = build_neck(img_neck)
-        self.head = build_head(img_head)
+        self.head = build_head(img_bbox_head)
         self.head_semantic_stuff = build_head(head_semantic_stuff)
 
     def extract_feat(self, img):
-        return super().extract_feat(img)
-
-    def _forward(self, x):
-        x = self.backbone(x)
+        x = self.backbone(img)
         feature128 = x[0]
         feature64 = x[1]
-        x = self.neck([x[1], x[2], x[3]])  # feature32
-        x_box = self.head(x)
+        feature32 = self.neck([x[1], x[2], x[3]])  # feature32
+        return feature32, feature64, feature128
+
+    def _forward(self, img):
+        feature_32, feature64, feature128 = self.extract_feat(img)
+        x_box = self.head(feature_32)
         x_semantic_stuff, x_semantic_thing_mask = self.head_semantic_stuff(
-            x[0], feature64, feature128)
+            feature_32[0], feature64, feature128)
         return x_box, x_semantic_stuff, x_semantic_thing_mask
 
     def simple_test(self, x):

@@ -17,6 +17,8 @@ img_norm_cfg = dict(
 
 model = dict(
     type='MergeNet',
+    merge_method='cat',
+    merge_in_channels=256,
     img_pretrained='work_dirs/nanodet/model_last.pth',
     voxel_layer=dict(
         max_num_points=5,
@@ -99,10 +101,8 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.0),
+    dict(type='Resize', img_scale=(512, 512), keep_ratio=False),
     dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -188,6 +188,6 @@ data = dict(
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
 gpu_ids = range(0, 2)
-load_from = 'work_dirs/merge_net/epoch_199.pth'
+
 lr = 0.001
 optimizer = dict(type='Adam', lr=lr)
