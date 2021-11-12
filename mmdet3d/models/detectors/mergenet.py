@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from os import stat_result
 import numpy as np
 import torch
 import warnings
@@ -20,6 +21,7 @@ class MergeNet(Base3DDetector):
                  voxel_encoder=None,
                  pts_backbone=None,
                  img_backbone=None,
+                 img_head=None,
                  img_neck=None,
                  img_bbox_head=None,
                  backbone=None,
@@ -27,7 +29,8 @@ class MergeNet(Base3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None,
+                 img_pretrained=None,
+                 head_semantic_stuff=None,
                  init_cfg=None):
         super(MergeNet, self).__init__(init_cfg=init_cfg)
         # point branch
@@ -35,11 +38,15 @@ class MergeNet(Base3DDetector):
             self.pts_backbone = builder.build_backbone(pts_backbone)
 
         # image branch
-        if self.with_img_backbone:
+        if img_backbone:
             self.img_backbone = builder.build_backbone(img_backbone)
-        if self.with_img_neck:
+        if img_neck:
             self.img_neck = builder.build_neck(img_neck)
-        if self.with_img_bbox_head:
+        if img_head:
+            self.img_head = builder.build_head(img_head)
+        if head_semantic_stuff:
+            self.head_semantic_sutff = builder.build_head(head_semantic_stuff)
+        if img_bbox_head:
             self.img_bbox_head = builder.build_head(img_bbox_head)
         self.freeze_img_branch_params()
 
@@ -55,6 +62,10 @@ class MergeNet(Base3DDetector):
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+
+        if img_pretrained:
+            state_dict = torch.load(img_pretrained)['state_dict']
+            self.load_state_dict(state_dict=state_dict, strict=False)
 
     def extract_feat(self, imgs):
         "mmdetection3d needs such abstract method."
@@ -183,7 +194,7 @@ class MergeNet(Base3DDetector):
                       gt_labels_3d=None,
                       gt_bboxes_ignore=None):
         # img feature
-        # img_features, img_bbox = self.extrac_img_feat(img)
+        img_features, img_bbox = self.extrac_img_feat(img)
 
         # points feature
         # points = torch.stack(points)

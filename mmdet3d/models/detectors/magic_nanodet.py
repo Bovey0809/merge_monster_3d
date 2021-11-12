@@ -25,17 +25,17 @@ from mmdet.models.detectors import SingleStageDetector, BaseDetector
 class NanoDetMagic(BaseDetector):
 
     def __init__(self,
-                 backbone,
-                 neck=None,
-                 head=None,
+                 img_backbone,
+                 img_neck=None,
+                 img_head=None,
                  head_semantic_stuff=None,
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
         super(NanoDetMagic, self).__init__()
-        self.backbone = build_backbone(backbone)
-        self.neck = build_neck(neck)
-        self.head = build_head(head)
+        self.backbone = build_backbone(img_backbone)
+        self.neck = build_neck(img_neck)
+        self.head = build_head(img_head)
         self.head_semantic_stuff = build_head(head_semantic_stuff)
 
     def extract_feat(self, img):
