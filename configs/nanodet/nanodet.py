@@ -43,7 +43,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=40,
-    workers_per_gpu=0,
+    workers_per_gpu=10,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/instances_train2017.json',
@@ -76,4 +76,4 @@ lr_config = dict(
 runner = dict(type='EpochBasedRunner', max_epochs=280)
 total_epochs = 280
 find_unused_parameters = True
-load_from = 'work_dirs/nanodet/model_last.pth'
+load_from = 'weights_changed.pth'
