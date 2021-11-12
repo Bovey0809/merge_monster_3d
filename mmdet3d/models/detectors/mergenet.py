@@ -29,6 +29,7 @@ class MergeNet(Base3DDetector):
                  head_semantic_stuff=None,
                  merge_method=None,
                  merge_in_channels=None,
+                 pretrained=None,
                  init_cfg=None):
         super(MergeNet, self).__init__(init_cfg=init_cfg)
         self.merge_method = merge_method

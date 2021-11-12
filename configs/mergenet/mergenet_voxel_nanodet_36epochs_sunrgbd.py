@@ -85,6 +85,7 @@ model = dict(
             pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')),
     test_cfg=dict(
         img_rcnn=dict(score_thr=0.1),
+        score_thr=0.1,
         pts=dict(
             sample_mod='seed',
             nms_thr=0.25,
@@ -135,14 +136,11 @@ test_pipeline = [
         use_dim=[0, 1, 2]),
     dict(
         type='MultiScaleFlipAug3D',
-        img_scale=(1333, 600),
+        img_scale=(512, 512),
         pts_scale_ratio=1,
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip', flip_ratio=0.0),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
             dict(
                 type='GlobalRotScaleTrans',
                 rot_range=[0, 0],
