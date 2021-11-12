@@ -28,9 +28,9 @@ train_pipeline = [
     dict(type='DefaultFormatBundle'),
     dict(
         type='Collect',
-        keys=[
-            'img', 'img_semantic_stuff', 'gt_bboxes', 'gt_labels', 'gt_masks'
-        ]),
+        keys=['img', 'img_semantic_stuff', 'gt_bboxes', 'gt_labels'],
+        meta_keys=('filename', 'ori_filename', 'ori_shape', 'img_shape',
+                   'warp_matrix')),
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -76,3 +76,4 @@ lr_config = dict(
 runner = dict(type='EpochBasedRunner', max_epochs=280)
 total_epochs = 280
 find_unused_parameters = True
+load_from = 'work_dirs/nanodet/model_last.pth'

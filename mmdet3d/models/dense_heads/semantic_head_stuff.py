@@ -226,11 +226,18 @@ class SemanticHeadStuff(nn.Module):
         dloss_stuff = self.dice_loss_stuff(preds_stuff, gt_stuff)
         floss_stuff = self.focal_loss_stuff(preds_stuff, gt_stuff)
         loss_stuff = dloss_stuff + floss_stuff
-        
-        dloss_thing = self.dice_loss_thing(preds_thing, gt_thing)
-        floss_thing = self.focal_loss_thing(preds_thing, gt_thing)
-        loss_thing = dloss_thing + floss_thing
 
+        if gt_thing.numel() != 0:
+            dloss_thing = self.dice_loss_thing(preds_thing, gt_thing)
+            floss_thing = self.focal_loss_thing(preds_thing, gt_thing)
+
+        else:
+            # NOTE: https://discuss.pytorch.org/t/how-to-initialize-zero-loss-tensor/86888
+            device = preds_thing.device
+            dloss_thing = torch.tensor([0.0], requires_grad=True, device=device)
+            floss_thing = torch.tensor([0.0], requires_grad=True, device=device)
+
+        loss_thing = dloss_thing + floss_thing
         # get loss for thing mask
         gt_mask_thing = gt_mask_thing.bool().int().to(dtype=torch.float32)
 
@@ -245,7 +252,6 @@ class SemanticHeadStuff(nn.Module):
                                                       gt_mask_thing)
         # print(floss_thing_mask)
         # loss_thing_mask = dloss_thing_mask + floss_thing_mask
-
         loss = loss_stuff + loss_thing + floss_thing_mask
 
         loss_states = dict(
