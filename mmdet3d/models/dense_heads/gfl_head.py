@@ -507,7 +507,7 @@ class GFLHead(nn.Module):
         cls_scores, bbox_preds = preds
         result_list = self.get_bboxes(cls_scores, bbox_preds, metas)
 
-        det_results = {}
+        det_results = []
         for result, meta in zip(result_list, metas):
             img_width, img_height, _ = meta['ori_shape']
             warp_matrix = meta['warp_matrix']
@@ -528,7 +528,7 @@ class GFLHead(nn.Module):
                     ],
                     axis=1,
                 ).tolist()
-            det_results[img_id] = det_result
+            det_results.append(det_result)
         return det_results
 
     def show_result(self,
