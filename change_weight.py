@@ -9,5 +9,5 @@ for key, value in params.items():
         key = key.replace('fpn', 'neck')
     new_paras[key] = value
 
-
+print(new_paras.keys())
 torch.save(new_paras, 'weights_changed.pth')

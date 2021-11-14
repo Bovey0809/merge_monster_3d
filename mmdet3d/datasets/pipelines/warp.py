@@ -145,10 +145,11 @@ def warp_and_resize(meta, warp_kwargs, dst_shape, keep_ratio=True):
     height = raw_img.shape[0]  # shape(h,w,c)
     width = raw_img.shape[1]
 
-    # add semantic stuff and thing
-    raw_semantic_stuff = meta["img_semantic_stuff"]
-    assert raw_img.shape[0] == raw_semantic_stuff.shape[0]
-    assert raw_img.shape[1] == raw_semantic_stuff.shape[1]
+    if 'img_semantic_stuff' in meta:
+        # add semantic stuff and thing
+        raw_semantic_stuff = meta["img_semantic_stuff"]
+        assert raw_img.shape[0] == raw_semantic_stuff.shape[0]
+        assert raw_img.shape[1] == raw_semantic_stuff.shape[1]
 
     # center
     C = np.eye(3)
@@ -182,21 +183,20 @@ def warp_and_resize(meta, warp_kwargs, dst_shape, keep_ratio=True):
     # M = T @ Sh @ R @ Str @ P @ C
     ResizeM = get_resize_matrix((width, height), dst_shape, keep_ratio)
     M = ResizeM @ M
-    img = cv2.warpPerspective(
-        raw_img, M, dsize=tuple(dst_shape)
-    )  #, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
+    img = cv2.warpPerspective(raw_img, M, dsize=tuple(dst_shape))
     meta["img"] = img
     meta["warp_matrix"] = M
 
-    # add semantic stuff and thing
-    img_semantic_stuff = cv2.warpPerspective(
-        raw_semantic_stuff,
-        M,
-        dsize=tuple(dst_shape),
-        flags=0,
-        borderMode=cv2.BORDER_CONSTANT,
-        borderValue=(255, 255, 255))
-    meta["img_semantic_stuff"] = img_semantic_stuff
+    if 'img_semantic_stuff' in meta:
+        # add semantic stuff and thing
+        img_semantic_stuff = cv2.warpPerspective(
+            raw_semantic_stuff,
+            M,
+            dsize=tuple(dst_shape),
+            flags=0,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(255, 255, 255))
+        meta["img_semantic_stuff"] = img_semantic_stuff
 
     if "gt_bboxes" in meta:
         boxes = meta["gt_bboxes"]
@@ -204,7 +204,7 @@ def warp_and_resize(meta, warp_kwargs, dst_shape, keep_ratio=True):
     if "gt_masks" in meta:
         tmp_masks = []
         for i, mask in enumerate(meta["gt_masks"]):
-            # NOTE: BitmapMasks can't be assigned by matrix. 
+            # NOTE: BitmapMasks can't be assigned by matrix.
             tmp_masks.append(cv2.warpPerspective(mask, M, dsize=dst_shape))
         meta['gt_masks'] = BitmapMasks(tmp_masks, *dst_shape)
 

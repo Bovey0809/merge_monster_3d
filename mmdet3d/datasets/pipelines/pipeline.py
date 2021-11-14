@@ -1,3 +1,4 @@
+
 # Copyright 2021 RangiLyu.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +14,12 @@
 # limitations under the License.
 
 import functools
-
+import numpy as np
+import cv2
 from mmdet.datasets.builder import PIPELINES
 
 from .color import color_aug_and_norm
-from .warp import warp_and_resize
+from .warp import get_resize_matrix, get_translate_matrix, warp_and_resize
 
 
 @PIPELINES.register_module()
@@ -60,7 +62,7 @@ class WarpResize(object):
 class SemanticStuff(object):
     """Semantic Stuff followed by LianFeng's magic nanodet.
     
-    Note: The implementation is follwing Nanodet. But details are different.
+    SemanticStuff is one of the groundtruth labels.(For loss calculation only).
     """
 
     def __init__(self) -> None:
@@ -108,3 +110,30 @@ class NanodetPipeline:
         meta = self.warp(meta=meta, dst_shape=dst_shape)
         meta = self.color(meta=meta)
         return meta
+
+
+@PIPELINES.register_module()
+class NanoDetResize:
+
+    def __init__(self, size, keep_ratio=True) -> None:
+        self.dst_shape = size
+        self.keep_ratio = keep_ratio
+
+    def __call__(self, input_dict):
+        raw_img = input_dict['img']
+        height = raw_img.shape[0]
+        width = raw_img.shape[1]
+
+        # Center
+        C = np.eye(3)
+        C[0, 2] = -width / 2
+        C[1, 2] = -height / 2
+        T = get_translate_matrix(0, width, height)
+        M = T @ C
+        ResizeM = get_resize_matrix((width, height), self.dst_shape,
+                                    self.keep_ratio)
+        M = ResizeM @ M
+        img = cv2.warpPerspective(raw_img, M, dsize=tuple(self.dst_shape))
+        input_dict['img'] = img
+        input_dict['warp_matrix'] = M
+        return input_dict

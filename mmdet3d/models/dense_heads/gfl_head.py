@@ -503,28 +503,15 @@ class GFLHead(nn.Module):
             pos_gt_bboxes = gt_bboxes[pos_assigned_gt_inds, :]
         return pos_inds, neg_inds, pos_gt_bboxes, pos_assigned_gt_inds
 
-    def post_process(self, preds, meta):
+    def post_process(self, preds, metas):
         cls_scores, bbox_preds = preds
-        result_list = self.get_bboxes(cls_scores, bbox_preds, meta)
-        det_results = {}
-        warp_matrixes = (
-            meta["warp_matrix"] if isinstance(meta["warp_matrix"], list) else
-            [meta["warp_matrix"]])
-        img_heights = (
-            meta["img_info"]["height"].cpu().numpy() if isinstance(
-                meta["img_info"]["height"], torch.Tensor) else
-            [meta["img_info"]["height"]])
-        img_widths = (
-            meta["img_info"]["width"].cpu().numpy() if isinstance(
-                meta["img_info"]["width"], torch.Tensor) else
-            [meta["img_info"]["width"]])
-        img_ids = (
-            meta["img_info"]["id"].cpu().numpy() if isinstance(
-                meta["img_info"]["id"], torch.Tensor) else
-            [meta["img_info"]["id"]])
+        result_list = self.get_bboxes(cls_scores, bbox_preds, metas)
 
-        for result, img_width, img_height, img_id, warp_matrix in zip(
-                result_list, img_widths, img_heights, img_ids, warp_matrixes):
+        det_results = {}
+        for result, meta in zip(result_list, metas):
+            img_width, img_height, _ = meta['ori_shape']
+            warp_matrix = meta['warp_matrix']
+            img_id = meta['img_info']['id']
             det_result = {}
             det_bboxes, det_labels = result
             det_bboxes = det_bboxes.cpu().numpy()
@@ -563,9 +550,8 @@ class GFLHead(nn.Module):
         num_levels = len(cls_scores)
         device = cls_scores[0].device
 
-        input_height, input_width = img_metas["img"].shape[2:]
-        input_shape = [input_height, input_width]
-
+        # NOTE: Here we should use the transformed img shape.
+        input_shape = img_metas[0]['batch_input_shape']
         result_list = []
         for img_id in range(cls_scores[0].shape[0]):
             cls_score_list = [

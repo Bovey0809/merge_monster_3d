@@ -12,21 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+from mmdet.datasets import DATASETS, CocoDataset
 
-import cv2
-import numpy as np
-import torch
-from pycocotools.coco import COCO
 
-from .base import BaseDataset
-from PIL import Image
-from mmdet.datasets import DATASETS, CustomDataset, CocoPanopticDataset, CocoDataset
-from .custom_3d import Custom3DDataset
+def xyxy2xywh(bbox):
+    """
+    change bbox to coco format
+    :param bbox: [x1, y1, x2, y2]
+    :return: [x, y, w, h]
+    """
+    return [
+        bbox[0],
+        bbox[1],
+        bbox[2] - bbox[0],
+        bbox[3] - bbox[1],
+    ]
 
 
 @DATASETS.register_module()
 class CocoNanoDetDataset(CocoDataset):
+
     # Get the img & add "img_semantic_stuff" field.
-    def get_img_annotation(self, idx):
-        pass
+    def results2json(self, results):
+        """
+        results: {image_id: {label: [bboxes...] } }
+        :return coco json format: {image_id:
+                                   category_id:
+                                   bbox:
+                                   score: }
+        """
+        json_results = []
+        for image_id, dets in results.items():
+            for label, bboxes in dets.items():
+                category_id = self.cat_ids[label]
+                for bbox in bboxes:
+                    score = float(bbox[4])
+                    detection = dict(
+                        image_id=int(image_id),
+                        category_id=int(category_id),
+                        bbox=xyxy2xywh(bbox),
+                        score=score,
+                    )
+                    json_results.append(detection)
+        return json_results

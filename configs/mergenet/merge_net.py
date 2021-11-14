@@ -190,4 +190,3 @@ gpu_ids = range(0, 2)
 load_from = 'work_dirs/merge_net/epoch_199.pth'
 lr = 0.001
 optimizer = dict(type='Adam', lr=lr)
-

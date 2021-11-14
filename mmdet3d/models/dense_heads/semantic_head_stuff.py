@@ -234,8 +234,12 @@ class SemanticHeadStuff(nn.Module):
         else:
             # NOTE: https://discuss.pytorch.org/t/how-to-initialize-zero-loss-tensor/86888
             device = preds_thing.device
-            dloss_thing = torch.tensor([0.0], requires_grad=True, device=device)
-            floss_thing = torch.tensor([0.0], requires_grad=True, device=device)
+            dloss_thing = torch.tensor([0.0],
+                                       requires_grad=True,
+                                       device=device)
+            floss_thing = torch.tensor([0.0],
+                                       requires_grad=True,
+                                       device=device)
 
         loss_thing = dloss_thing + floss_thing
         # get loss for thing mask
@@ -310,98 +314,3 @@ class SemanticHeadStuff(nn.Module):
             borderValue=(255, 255, 255))
 
         return preds
-
-        # ###### process stuff
-        # preds_stuff = preds[:, 80:, :, :]
-        # preds_stuff = F.softmax(preds_stuff, dim=1)
-        # preds_stuff = preds_stuff.squeeze(0)
-        # # print(preds_stuff.size())
-
-        # preds_stuff = preds_stuff.argmax(dim=0)
-        # # print(preds_stuff.size())
-
-        # preds_stuff = preds_stuff + 80
-        # preds_stuff = preds_stuff.cpu().numpy()
-
-        # print('Semantic Stuff Labels', np.unique(preds_stuff))
-        # preds_stuff = cv2.warpPerspective(preds_stuff, warp_matrix, dsize=tuple([height, width]), flags=0, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
-
-        # ###### process thing
-        # preds_thing = preds[:, :80, :, :]
-        # preds_thing = F.softmax(preds_thing, dim=1)
-        # preds_thing = preds_thing.squeeze(0)
-        # preds_thing = preds_thing.argmax(dim=0)
-        # preds_thing = preds_thing.cpu().numpy()
-
-        # print('Semantic Thing Labels', np.unique(preds_thing))
-        # preds_thing = cv2.warpPerspective(preds_thing, warp_matrix, dsize=tuple([height, width]), flags=0, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
-
-        # return preds_stuff, preds_thing
-
-        # exit()
-
-        # print(preds_stuff_mask.size(), preds_stuff_mask)
-
-        # preds_stuff = F.softmax(preds[:, 80:, :, :], dim=1)
-        # print(preds_stuff.size(), preds_stuff)
-
-        # preds_thing = F.softmax(preds[:, :80, :, :], dim=1)
-        # # print(preds_thing.size(), preds_thing)
-
-        # b, c, h, w = preds_thing.size()
-        # for i in range(c):
-        #     preds_thing[:, i, :, :] = preds_thing[:, i, :, :]*(preds_thing_mask.squeeze(0))
-
-        #     print(i)
-        #     print(preds_thing[:, i, :, :].size())
-        #     print((preds_thing_mask.squeeze(0)).size())
-
-        # exit()
-
-        # preds_stuff_mask = 1 - preds_thing_mask
-        # print(preds_stuff_mask.size(), preds_stuff_mask)
-
-        # preds_stuff = F.softmax(preds[:, 80:, :, :], dim=1)
-        # print(preds_stuff.size(), preds_stuff)
-
-        # aaa = torch.ones(1,1,128,128)
-        # print(aaa)
-        # print(aaa-1)
-
-        # exit()
-
-        # 128 to 512
-        # preds = F.interpolate(preds, scale_factor=4, mode="bilinear") # mode="nearest"
-        # print(preds.size())
-
-        # preds[:, 80:, :, :] = F.softmax(preds[:, 80:, :, :], dim=1)
-        # preds[:, :80, :, :] = F.softmax(preds[:, :80, :, :], dim=1)
-
-        # # # preds[:, :80, :, :] = F.softmax(preds[:, :80, :, :], dim=1)
-        # # for i in range(0, 80):
-        # #     preds[:, i, :, :] = preds[:, i, :, :]*(preds_thing_mask.squeeze(0))
-
-        # # # preds[:, 80:, :, :] = F.softmax(preds[:, 80:, :, :], dim=1)
-        # # for i in range(80, c):
-        # #     preds[:, i, :, :] = preds[:, i, :, :]*(preds_stuff_mask.squeeze(0))
-
-        # # print(preds.size())
-
-        # preds = F.softmax(preds, dim=1)
-
-        # preds = F.interpolate(preds, scale_factor=4, mode="bilinear") # mode="nearest"
-
-        # preds = preds.argmax(dim=1)
-
-        # # print(preds.size())
-
-        # preds = preds.squeeze(0)
-
-        # preds = preds.cpu().numpy()
-
-        # print('Semantic Thing+Sutff Labels', np.unique(preds))
-        # preds = cv2.warpPerspective(preds, warp_matrix, dsize=tuple([height, width]), flags=0, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
-
-        # preds_thing_mask = preds_thing_mask.expand([-1, 133, -1, -1])
-
-        # preds_thing_mask[:, 80:, :, :] = 1 - preds_thing_mask[:, 80:, :, :]

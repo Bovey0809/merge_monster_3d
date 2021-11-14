@@ -186,6 +186,3 @@ data = dict(
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
 gpu_ids = range(0, 2)
-
-lr = 0.001
-optimizer = dict(type='Adam', lr=lr)
