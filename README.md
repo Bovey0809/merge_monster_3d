@@ -23,8 +23,9 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
 - [x] 2D images feature map extractor.
 - [x] Single Training (mainly for debugging).
 - [x] Distribute Training
-- [ ] Inference (For 3D Objects detection)
-- [ ] Evaluation (Metric Map)
+- [x] Inference (For 3D Objects detection)
+- [x] Evaluation (Metric Map)
+- [x] NanoDet train, test, eval
 
 ## Basic Script
 
@@ -33,10 +34,12 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
 - Single GPU(Debugging)
     ```bash
     python tools/train.py configs/mergenet/merge_net.py
+    python tools/train.py configs/nanodet/nanodet.py
     ```
 - Multi gpus(8 gpus)
     ```bash
     ./tools/dist_train.sh configs/mergenet/merge_net.py 8
+    ./tools/dist_train.sh configs/nanodet/nanodet.py 8
     ```
 
 ### Test
@@ -46,5 +49,8 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
     python tools/test.py configs/mergenet/merge_net.py weights/lastest.pth
     ```
 - Multi GPUS()
-
+    ```bash
+    ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 8
+    ```
+    
 ### 

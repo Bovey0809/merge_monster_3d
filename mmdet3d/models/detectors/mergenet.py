@@ -68,7 +68,7 @@ class MergeNet(Base3DDetector):
         self.test_cfg = test_cfg
 
         if img_pretrained:
-            state_dict = torch.load(img_pretrained)['state_dict']
+            state_dict = torch.load(img_pretrained)
             self.load_state_dict(state_dict=state_dict, strict=False)
 
     def extract_feat(self, imgs):

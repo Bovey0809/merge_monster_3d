@@ -102,8 +102,13 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(512, 512), keep_ratio=False),
-    dict(type='Normalize', **img_norm_cfg),
+    dict(type='NanoDetResize', size=(512, 512), keep_ratio=True),
+    dict(
+        type='ColorAugNorm',
+        brightness=0.2,
+        contrast=[0.6, 1.4],
+        saturation=[0.5, 1.2],
+        normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
