@@ -52,5 +52,9 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
     ```bash
     ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 8
     ```
+    or
+    ```bash
+    CUDA_VISIBLE_DEVICES=1,2,3,4 ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 4
+    ```
     
 ### 
