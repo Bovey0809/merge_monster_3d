@@ -136,4 +136,5 @@ class NanoDetResize:
         img = cv2.warpPerspective(raw_img, M, dsize=tuple(self.dst_shape))
         input_dict['img'] = img
         input_dict['warp_matrix'] = M
+        input_dict['img_shape'] = img.shape
         return input_dict

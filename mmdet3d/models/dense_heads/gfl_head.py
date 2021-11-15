@@ -551,7 +551,7 @@ class GFLHead(nn.Module):
         device = cls_scores[0].device
 
         # NOTE: Here we should use the transformed img shape.
-        input_shape = img_metas[0]['batch_input_shape']
+        input_shape = img_metas[0]['img_shape'][:2]
         result_list = []
         for img_id in range(cls_scores[0].shape[0]):
             cls_score_list = [

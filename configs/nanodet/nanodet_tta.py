@@ -32,22 +32,28 @@ train_pipeline = [
     dict(
         type='Collect',
         keys=['img', 'img_semantic_stuff', 'gt_bboxes', 'gt_labels'],
-        meta_keys=('img_info', 'filename', 'ori_filename', 'ori_shape',
-                   'img_shape', 'warp_matrix')),
+        meta_keys=('img_info', 'filename', 'ori_filename', 'ori_shape', 'img_shape',
+                   'warp_matrix')),
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='NanoDetResize', size=(512, 512)),
     dict(
-        type='ColorAugNorm',
-        normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
-    dict(type='Pad', size_divisor=32),
-    dict(type='ImageToTensor', keys=['img']),
-    dict(
-        type='Collect',
-        keys=['img'],
-        meta_keys=('img_info', 'ori_filename', 'ori_shape', 'img_shape',
-                   'warp_matrix')),
+        type='MultiScaleFlipAug',
+        img_scale=(512, 512),
+        flip=False,
+        transforms=[
+            dict(type='WarpResize', size=(512, 512)),
+            dict(
+                type='ColorAugNorm',
+                normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
+            dict(type='Pad', size_divisor=32),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(
+                type='Collect',
+                keys=['img'],
+                meta_keys=('img_info', 'filename', 'ori_filename', 'ori_shape',
+                           'img_shape', 'warp_matrix')),
+        ])
 ]
 
 data = dict(

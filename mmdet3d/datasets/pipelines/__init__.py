@@ -14,7 +14,7 @@ from .transforms_3d import (BackgroundPointsFilter, GlobalAlignment,
                             PointShuffle, PointsRangeFilter,
                             RandomDropPointsColor, RandomFlip3D,
                             RandomJitterPoints, VoxelBasedPointSampler)
-from .pipeline import NanodetPipeline
+from .pipeline import NanoDetResize
 
 __all__ = [
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
@@ -26,5 +26,5 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'GlobalAlignment', 'IndoorPatchPointSample',
     'LoadImageFromFileMono3D', 'ObjectNameFilter', 'RandomDropPointsColor',
-    'RandomJitterPoints', 'NanodetPipeline'
+    'RandomJitterPoints', 'NanoDetResize'
 ]

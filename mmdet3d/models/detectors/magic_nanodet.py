@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
-
-import torch
-import numpy as np
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
-from mmcv.runner import BaseModule
-from mmdet.models.detectors import SingleStageDetector, BaseDetector
-from mmdet.core.bbox.transforms import bbox2result
+from mmdet.models.detectors import BaseDetector
 
 
 @DETECTORS.register_module()
@@ -53,28 +47,6 @@ class NanoDetMagic(BaseDetector):
             feature_32[0], feature64, feature128)
         return x_box, x_semantic_stuff, x_semantic_thing_mask
 
-    def inference(self, meta, class_names):
-        with torch.no_grad():
-            torch.cuda.synchronize()
-            time1 = time.time()
-            preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self(
-                meta["img"])
-            torch.cuda.synchronize()
-            time2 = time.time()
-            # print("forward time: {:.3f}s".format((time2 - time1)), end=" | ")
-
-            # process box result
-            preds_box = self.head.post_process(preds_box, meta)
-            preds_box = preds_box[0]
-
-            # process semantic result
-            preds_semantic_stuff = self.head_semantic_stuff.post_process(
-                preds_semantic_stuff, preds_semantic_thing_mask, meta)
-
-            torch.cuda.synchronize()
-            # print("decode time: {:.3f}s".format((time.time() - time2)), end=" | ")
-        return (preds_box, preds_semantic_stuff)
-
     def forward_train(self, img, img_metas, **gt):
         device = img.device
         preds_box, preds_semantic_stuff, preds_semantic_thing_mask = self._forward(
@@ -95,16 +67,11 @@ class NanoDetMagic(BaseDetector):
             Stuff_Focal=loss_states_semantic_stuff['Focal_Loss_stuff'],
             Thing_Dice=loss_states_semantic_stuff['Dice_Loss_thing'],
             Thing_Focal=loss_states_semantic_stuff['Focal_Loss_thing'],
-
-            # ThingMask_Dice=loss_states_semantic_stuff['Dice_Loss_thing_mask'],
             Thing_Mask=loss_states_semantic_stuff['Focal_Loss_thing_mask'])
         return loss_states
 
-    def simple_test(self, img, img_metas, **kwargs):
-        feature_32, _, _ = self.extract_feat(img)
+    def forward_test(self, imgs, img_metas, **kwargs):
+        feature_32, _, _ = self.extract_feat(imgs)
         preds_box = self.head(feature_32)
         det_results = self.head.post_process(preds_box, img_metas)
         return det_results
-
-    def aug_test(self, imgs, img_metas, **kwargs):
-        return super().aug_test(imgs, img_metas, **kwargs)
