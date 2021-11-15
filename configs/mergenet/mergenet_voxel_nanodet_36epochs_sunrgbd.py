@@ -1,7 +1,7 @@
 _base_ = [
     '../_base_/datasets/sunrgbd-3d-10class.py',
     '../_base_/schedules/schedule_3x.py', '../_base_/default_runtime.py',
-    '../_base_/models/imvotenet_image_base_yolo.py'
+    '../_base_/models/nanodet.py'
 ]
 
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
@@ -17,6 +17,9 @@ img_norm_cfg = dict(
 
 model = dict(
     type='MergeNet',
+    merge_method='cat',
+    merge_in_channels=256,
+    img_pretrained='work_dirs/nanodet/model_last.pth',
     voxel_layer=dict(
         max_num_points=5,
         point_cloud_range=point_cloud_range,
@@ -82,6 +85,7 @@ model = dict(
             pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')),
     test_cfg=dict(
         img_rcnn=dict(score_thr=0.1),
+        score_thr=0.1,
         pts=dict(
             sample_mod='seed',
             nms_thr=0.25,
@@ -98,10 +102,13 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.0),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
+    dict(type='NanoDetResize', size=(512, 512), keep_ratio=True),
+    dict(
+        type='ColorAugNorm',
+        brightness=0.2,
+        contrast=[0.6, 1.4],
+        saturation=[0.5, 1.2],
+        normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -134,14 +141,11 @@ test_pipeline = [
         use_dim=[0, 1, 2]),
     dict(
         type='MultiScaleFlipAug3D',
-        img_scale=(1333, 600),
+        img_scale=(512, 512),
         pts_scale_ratio=1,
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip', flip_ratio=0.0),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
             dict(
                 type='GlobalRotScaleTrans',
                 rot_range=[0, 0],
@@ -187,6 +191,3 @@ data = dict(
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
 gpu_ids = range(0, 2)
-load_from = 'work_dirs/merge_net/epoch_199.pth'
-lr = 0.001
-optimizer = dict(type='Adam', lr=lr)

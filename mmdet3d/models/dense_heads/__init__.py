@@ -13,9 +13,14 @@ from .ssd_3d_head import SSD3DHead
 from .vote_head import VoteHead
 from .center3d_head import Center3DHead
 from .points2d_classification_head import Points2DClassificationHead
+from .gfl_head import GFLHead
+from .nanodet_head import NanoDetHead
+from .semantic_head_stuff import SemanticHeadStuff
+
 __all__ = [
     'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
     'SSD3DHead', 'BaseConvBboxHead', 'CenterHead', 'ShapeAwareHead',
     'BaseMono3DDenseHead', 'AnchorFreeMono3DHead', 'FCOSMono3DHead',
-    'GroupFree3DHead', 'Center3DHead', 'Points2DClassificationHead'
+    'GroupFree3DHead', 'Center3DHead', 'Points2DClassificationHead', 'GFLHead',
+    'NanoDetHead', 'SemanticHeadStuff'
 ]

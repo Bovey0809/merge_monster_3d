@@ -1,12 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
 import torch
-import warnings
 import torch.nn.functional as F
 from mmdet3d.ops.voxel.voxelize import Voxelization
-from .single_stage import SingleStage3DDetector
+import torch.nn as nn
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
-from mmdet3d.models.utils import MLP
 from mmdet.models import DETECTORS
 from .. import builder
 from .base import Base3DDetector
@@ -20,6 +17,7 @@ class MergeNet(Base3DDetector):
                  voxel_encoder=None,
                  pts_backbone=None,
                  img_backbone=None,
+                 img_head=None,
                  img_neck=None,
                  img_bbox_head=None,
                  backbone=None,
@@ -27,23 +25,36 @@ class MergeNet(Base3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
+                 img_pretrained=None,
+                 head_semantic_stuff=None,
+                 merge_method=None,
+                 merge_in_channels=None,
                  pretrained=None,
                  init_cfg=None):
         super(MergeNet, self).__init__(init_cfg=init_cfg)
+        self.merge_method = merge_method
         # point branch
         if pts_backbone is not None:
             self.pts_backbone = builder.build_backbone(pts_backbone)
 
         # image branch
-        if self.with_img_backbone:
+        if img_backbone:
             self.img_backbone = builder.build_backbone(img_backbone)
-        if self.with_img_neck:
+        if img_neck:
             self.img_neck = builder.build_neck(img_neck)
-        if self.with_img_bbox_head:
+        if img_head:
+            self.img_head = builder.build_head(img_head)
+        if head_semantic_stuff:
+            self.head_semantic_sutff = builder.build_head(head_semantic_stuff)
+        if img_bbox_head:
             self.img_bbox_head = builder.build_head(img_bbox_head)
         self.freeze_img_branch_params()
 
         # Merge Branch(Centernet3d's head)
+        if merge_in_channels and merge_method:
+            self.magic_merge = nn.Conv2d(merge_in_channels, 128, 3, 1, 1)
+        else:
+            self.magic_merge = None
         bbox_head.update(train_cfg=train_cfg)
         bbox_head.update(test_cfg=test_cfg)
 
@@ -55,6 +66,10 @@ class MergeNet(Base3DDetector):
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+
+        if img_pretrained:
+            state_dict = torch.load(img_pretrained)
+            self.load_state_dict(state_dict=state_dict, strict=False)
 
     def extract_feat(self, imgs):
         "mmdetection3d needs such abstract method."
@@ -130,7 +145,10 @@ class MergeNet(Base3DDetector):
     @torch.no_grad()
     def extrac_img_feat(self, img, img_metas=None):
         x = self.img_backbone(img)
-        img_features = self.img_neck(x)
+        if self.img_neck._get_name() == 'TAN':
+            img_features = self.img_neck([x[1], x[2], x[3]])  # feature32
+        else:
+            img_features = self.img_neck(x)
         img_bbox = self.img_bbox_head(img_features)
         return img_features, img_bbox
 
@@ -173,6 +191,16 @@ class MergeNet(Base3DDetector):
         #     x=[x[0]+xconv2]
         return x, point_misc
 
+    def merge(self, img_features, point_feat, method='cat'):
+        assert method in ('cat', 'upsample', 'deconv')
+        # TODO Add different method for trail.
+        shape = point_feat[0].shape
+        new_img_features = F.interpolate(
+            img_features[0], size=[shape[2], shape[3]])
+        merged_feature0 = torch.cat((new_img_features, point_feat[0]), 1)
+        merged_feature = self.magic_merge(merged_feature0)
+        return merged_feature
+
     def forward_train(self,
                       img,
                       points=None,
@@ -183,7 +211,7 @@ class MergeNet(Base3DDetector):
                       gt_labels_3d=None,
                       gt_bboxes_ignore=None):
         # img feature
-        # img_features, img_bbox = self.extrac_img_feat(img)
+        img_features, img_bbox = self.extrac_img_feat(img)
 
         # points feature
         # points = torch.stack(points)
@@ -198,8 +226,13 @@ class MergeNet(Base3DDetector):
         # TODO Debug dim change
         # points = [torch.tensor(np.load('./bug_points.npy')).to('cuda')]
         x, _ = self.extract_voxel_feat(points)
+
         # merge
-        pred_dict = self.centernet3d_head(x)
+        if self.magic_merge:
+            x = self.merge(img_features, x, self.merge_method)
+
+        pred_dict = self.centernet3d_head([x])
+
         losses = dict()
         head_loss = self.centernet3d_head.loss(pred_dict, gt_labels_3d,
                                                gt_bboxes_3d)

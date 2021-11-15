@@ -28,4 +28,5 @@ ENV FORCE_CUDA="1"
 
 RUN pip install -r requirements/build.txt
 # RUN pip install setup.py develop
+RUN pip install git+https://github.com/cocodataset/panopticapi.git
 RUN pip install --no-cache-dir -e .
