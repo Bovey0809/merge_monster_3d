@@ -4,11 +4,15 @@ _base_ = [
     '../_base_/models/imvotenet_image_base_yolo.py'
 ]
 
+lr = 0.008
+optimizer = dict(type='AdamW', lr=lr, weight_decay=0.01)
+lr_config = dict(policy='step', warmup=None, step=[24, 32])
+
+
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
 num_class = len(class_names)
-# num_class=80
 point_cloud_range = [-7.08, -0.6, -7.5, 7, 9.0, 4.5]  # xyzxyz to voxilize
 voxel_size = [0.01, 0.006, 0.3]  # For Loss and Gt calculation
 
@@ -18,11 +22,11 @@ img_norm_cfg = dict(
 
 model = dict(
     type='MergeNet',
-    magic_merge=True,
+    load_img_dect_weight='/mmdetection3d/work_dirs/yolov3_mobilenetv2_changed.pth',
+    merge=False,
     normal_style='BN',
     upsampe_style='interpolate',
     merge_style='concat',
-    img_model_weight='/mmdetection3d/work_dirs/yolov3_mobilenetv2_changed.pth',
     voxel_layer=dict(
         max_num_points=5,
         point_cloud_range=point_cloud_range,
@@ -192,7 +196,5 @@ data = dict(
     test=dict(pipeline=test_pipeline))
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
-# gpu_ids = range(0, 2)
-# load_from = 'work_dirs/merge_net/epoch_199.pth'
-lr = 0.00001  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, weight_decay=0.01)
+gpu_ids = range(0, 2)
+#load_from = 'work_dirs/merge_net/72_epochs/merge_net/latest.pth'

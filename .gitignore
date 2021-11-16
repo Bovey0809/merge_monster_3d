@@ -8,6 +8,8 @@ debug/
 *.so
 *.npy
 *.json
+*.swo
+*.swp
 # Distribution / packaging
 .Python
 build/
