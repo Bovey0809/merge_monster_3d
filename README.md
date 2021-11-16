@@ -59,8 +59,11 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
     
 ### Experiments
 
-Network | config | dataset | result
---- | --- | --- | ---
-CenterNet3D | mergenet_voxel_voxelencoder_middleencoder_1x1_36epochs_sunrgbd.py | SunRGBD | mAP 20.0
-NanodetTAN | nanodet_tta.py | COCO | mAP 38.9
+Network | config | dataset | result | script id
+--- | --- | --- | --- | --- 
+CenterNet3D | mergenet_voxel_voxelencoder_middleencoder_1x1_36epochs_sunrgbd.py | SunRGBD | mAP 20.0 | 1
+NanodetTAN | nanodet.py | COCO | mAP 22.0 | 2
 
+#### Simple Scripts for 
+1. ./tools/train.py configs/mergenet/mergenet_voxel_voxelencoder_middleencoder_1x1_36epochs_sunrgbd.py 8
+2. ./tools/dist_test.sh configs/nanodet/nanodet.py ./weights_changed.pth 8 --eval bbox

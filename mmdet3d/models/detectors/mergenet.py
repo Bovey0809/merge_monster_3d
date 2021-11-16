@@ -35,8 +35,7 @@ class MergeNet(Base3DDetector):
                  normal_style=None,
                  upsampe_style=None,
                  merge_style=None,
-                 img_model_weight=None  
-                 ):
+                 img_model_weight=None):
         super(MergeNet, self).__init__(init_cfg=init_cfg)
 
         # self.merge_method = merge_method
@@ -74,18 +73,19 @@ class MergeNet(Base3DDetector):
         # if img_pretrained:
         #     state_dict = torch.load(img_pretrained)
         #     self.load_state_dict(state_dict=state_dict, strict=False)
-        self.magic_merge=magic_merge       
-        self.normal_style=normal_style
-        self.upsampe_style=upsampe_style
-        self.merge_style=merge_style
-        self.img_model_weight=img_model_weight
+        self.magic_merge = magic_merge
+        self.normal_style = normal_style
+        self.upsampe_style = upsampe_style
+        self.merge_style = merge_style
+        self.img_model_weight = img_model_weight
         self.merge_conv2d = nn.Sequential(
             nn.Conv2d(224, 128, 3, 1, 1),
-            nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True),
             nn.ReLU())
-        self.BN2D_point=nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True)
-        self.BN2D_image=nn.BatchNorm2d(96,eps=1e-05,momentum=0.1,affine=True)
-
+        self.BN2D_point = nn.BatchNorm2d(
+            128, eps=1e-05, momentum=0.1, affine=True)
+        self.BN2D_image = nn.BatchNorm2d(
+            96, eps=1e-05, momentum=0.1, affine=True)
 
     def extract_feat(self, imgs):
         "mmdetection3d needs such abstract method."
@@ -223,26 +223,27 @@ class MergeNet(Base3DDetector):
         # self.BN2D_point=torch.nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True)
         # self.BN2D_image=torch.nn.BatchNorm2d(96,eps=1e-05,momentum=0.1,affine=True)
 
-        shape=point_feat.shape
+        shape = point_feat.shape
 
-        if self.normal_style=='BN':
-            img_features=self.BN2D_image(img_features)
-            point_feat=self.BN2D_point(point_feat)
+        if self.normal_style == 'BN':
+            img_features = self.BN2D_image(img_features)
+            point_feat = self.BN2D_point(point_feat)
 
-        if self.upsampe_style=='interpolate':
-            new_img_features=F.interpolate(img_features,size=[shape[2],shape[3]])
+        if self.upsampe_style == 'interpolate':
+            new_img_features = F.interpolate(
+                img_features, size=[shape[2], shape[3]])
 
-        if self.merge_style=='concat':
-            merged_feature0=torch.cat((new_img_features,point_feat),1)
-            merged_feature=self.merge_conv2d(merged_feature0)
-        elif self.merge_style=='sum':
-            merged_feature0=torch.add(new_img_features,point_feat,alpha=self.weight_params)
-            merged_feature=self.merge_conv2d(merged_feature0)
-        elif self.merge_style=='multiply':
-            a=0
+        if self.merge_style == 'concat':
+            merged_feature0 = torch.cat((new_img_features, point_feat), 1)
+            merged_feature = self.merge_conv2d(merged_feature0)
+        elif self.merge_style == 'sum':
+            merged_feature0 = torch.add(
+                new_img_features, point_feat, alpha=self.weight_params)
+            merged_feature = self.merge_conv2d(merged_feature0)
+        elif self.merge_style == 'multiply':
+            a = 0
 
         return [merged_feature]
-
 
     def forward_train(self,
                       img,
@@ -276,7 +277,6 @@ class MergeNet(Base3DDetector):
         else:
             x = point_features
 
-
         pred_dict = self.centernet3d_head(x)
 
         losses = dict()
@@ -306,7 +306,6 @@ class MergeNet(Base3DDetector):
             x = self.merge_features(img_features[-1], point_features[0])
         else:
             x = point_features
-
 
         pred_dict = self.centernet3d_head(x)
         bbox_list = self.centernet3d_head.get_bboxes(pred_dict, img_metas)
@@ -338,5 +337,4 @@ class MergeNet(Base3DDetector):
     def init_weights(self):
         if self.img_model_weight:
             state_dict = torch.load(self.img_model_weight)['state_dict']
-            self.load_state_dict(state_dict=state_dict,strict=False)
-        # return super().init_weights()
+            self.load_state_dict(state_dict=state_dict, strict=False)
