@@ -50,11 +50,11 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
     ```
 - Multi GPUS()
     ```bash
-    ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 8
+    ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 8 --eval bbox
     ```
     or
     ```bash
-    CUDA_VISIBLE_DEVICES=1,2,3,4 ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 4
+    CUDA_VISIBLE_DEVICES=1,2,3,4 ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 4 --eval bbox
     ```
     
 ### Experiments
