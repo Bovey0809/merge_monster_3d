@@ -33,7 +33,7 @@ class MergeNet(Base3DDetector):
                  init_cfg=None,
                  magic_merge=None,
                  normal_style=None,
-                 upsampe_style=None,
+                 upsample_style=None,
                  merge_style=None,
                  img_model_weight=None):
         super(MergeNet, self).__init__(init_cfg=init_cfg)
@@ -75,7 +75,7 @@ class MergeNet(Base3DDetector):
         #     self.load_state_dict(state_dict=state_dict, strict=False)
         self.magic_merge = magic_merge
         self.normal_style = normal_style
-        self.upsampe_style = upsampe_style
+        self.upsampe_style = upsample_style
         self.merge_style = merge_style
         self.img_model_weight = img_model_weight
         self.merge_conv2d = nn.Sequential(
@@ -336,5 +336,7 @@ class MergeNet(Base3DDetector):
 
     def init_weights(self):
         if self.img_model_weight:
-            state_dict = torch.load(self.img_model_weight)['state_dict']
+            state_dict = torch.load(self.img_model_weight)
+            if hasattr(state_dict, 'state_dict'):
+                state_dict = state_dict['state_dict']
             self.load_state_dict(state_dict=state_dict, strict=False)

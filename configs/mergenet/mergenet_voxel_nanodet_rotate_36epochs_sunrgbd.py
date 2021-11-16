@@ -17,9 +17,11 @@ img_norm_cfg = dict(
 
 model = dict(
     type='MergeNet',
-    merge_method='cat',
-    merge_in_channels=256,
-    img_model_weight='work_dirs/nanodet/model_last.pth',
+    merge_method=True,
+    normal_style='BN',
+    upsample_style='interpolate',
+    merge_style='concat',
+    img_pretrained='work_dirs/nanodet/model_last.pth',
     voxel_layer=dict(
         max_num_points=5,
         point_cloud_range=point_cloud_range,
@@ -99,6 +101,9 @@ train_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
+    dict(
+        type='WarpMatrix',
+        warp_matrix=[[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]),
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
@@ -127,7 +132,7 @@ train_pipeline = [
         type='Collect3D',
         keys=[
             'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-            'gt_labels_3d'
+            'gt_labels_3d', 'warp_matrix'
         ])
 ]
 
@@ -139,6 +144,9 @@ test_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
+    dict(
+        type='WarpMatrix',
+        warp_matrix=[[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(512, 512),

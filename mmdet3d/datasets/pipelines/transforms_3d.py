@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import warnings
+import cv2
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
@@ -669,6 +670,34 @@ class GlobalRotScaleTrans(object):
         repr_str += f' translation_std={self.translation_std},'
         repr_str += f' shift_height={self.shift_height})'
         return repr_str
+
+
+@PIPELINES.register_module()
+class WarpMatrix(object):
+
+    def __init__(self, warp_matrix) -> None:
+        self.warp_matrix = np.array(warp_matrix)
+
+    def __call__(self, input_dict):
+        rotation = self.warp_matrix
+        # if no bbox in input_dict, only rotate points
+        if len(input_dict['bbox3d_fields']) == 0:
+            rot_mat_T = input_dict['points'].rotate(rotation)
+            input_dict['pcd_rotation'] = rot_mat_T
+            return
+
+        # rotate points with bboxes
+        for key in input_dict['bbox3d_fields']:
+            if len(input_dict[key].tensor) != 0:
+                points, rot_mat_T = input_dict[key].rotate(
+                    rotation, input_dict['points'])
+                input_dict['points'] = points
+                input_dict['pcd_rotation'] = rot_mat_T
+        return input_dict
+
+    def __repr__(self) -> str:
+        res = "Rotate Matrix"
+        return res
 
 
 @PIPELINES.register_module()
