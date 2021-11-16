@@ -509,7 +509,7 @@ class GFLHead(nn.Module):
 
         det_results = []
         for result, meta in zip(result_list, metas):
-            img_width, img_height, _ = meta['ori_shape']
+            img_height, img_width, _ = meta['ori_shape']
             warp_matrix = meta['warp_matrix']
             img_id = meta['img_info']['id']
             det_result = {}

@@ -1,12 +1,25 @@
-from mmcv.utils.config import Config
-from mmdet.datasets.builder import build_dataloader
-from mmdet3d.datasets.builder import build_dataset
-import torch
+# %%
+import numpy as np
 
-cfg = Config.fromfile(
-    '/mmdetection3d/configs/_base_/datasets/coco_instance.py')
-dataset = build_dataset(cfg.data.train)
-# dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
-dataloader = build_dataloader(dataset, 4, 0, dist=False)
-for i, data in enumerate(dataloader):
-    print(data)
+li = './work_dirs/nanodet/lian.npy'
+my = './my.npy'
+liimg = './work_dirs/nanodet/lian_img.npy'
+myimg = './my_img.npy'
+
+li = np.load(li)
+my = np.load(my)
+
+print(np.allclose(li, my, 1e-1))
+
+liimg = np.load(liimg)
+myimg = np.load(myimg)
+# %%
+print(np.allclose(liimg, myimg, 1e-2))
+li32 = './work_dirs/nanodet/lian32.npy'
+my32 = './myfeat32.npy'
+
+li32 = np.load(li32)
+my32 = np.load(my32)
+print(np.allclose(li32, my32, 1e-2))
+# %%
+    

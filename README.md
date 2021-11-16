@@ -53,4 +53,10 @@ docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/
     ./tools/dist_test.sh configs/nanodet/nanodet.py weights.pth 8
     ```
     
-### 
+### Experiments
+
+Network | config | dataset | result
+--- | --- | --- | ---
+CenterNet3D | mergenet_voxel_voxelencoder_middleencoder_1x1_36epochs_sunrgbd.py | SunRGBD | mAP 20.0
+NanodetTAN | nanodet_tta.py | COCO | mAP 38.9
+

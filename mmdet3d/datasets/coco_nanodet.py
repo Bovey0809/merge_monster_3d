@@ -44,6 +44,7 @@ class CocoNanoDetDataset(CocoDataset):
         """
         json_results = []
         for idx, dets in enumerate(results):
+
             image_id = self.img_ids[idx]
             for label, bboxes in dets.items():
                 category_id = self.cat_ids[label]

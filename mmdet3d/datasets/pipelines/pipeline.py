@@ -1,4 +1,3 @@
-
 # Copyright 2021 RangiLyu.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +18,7 @@ import cv2
 from mmdet.datasets.builder import PIPELINES
 
 from .color import color_aug_and_norm
-from .warp import get_resize_matrix, get_translate_matrix, warp_and_resize
+from .warp import get_resize_matrix, get_translate_matrix, warp_and_resize, warp_boxes
 
 
 @PIPELINES.register_module()
@@ -137,4 +136,8 @@ class NanoDetResize:
         input_dict['img'] = img
         input_dict['warp_matrix'] = M
         input_dict['img_shape'] = img.shape
+        if "gt_bboxes" in input_dict:
+            boxes = input_dict['gt_bboxes']
+            input_dict['gt_bboxes'] = warp_boxes(boxes, M, self.dst_shape[0],
+                                                 self.dst_shape[1])
         return input_dict

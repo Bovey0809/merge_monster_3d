@@ -10,11 +10,11 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
-
+# limitations under the License
+import numpy as np
 from mmdet.models import DETECTORS, build_backbone, build_head, build_neck
 from mmdet.models.detectors import BaseDetector
-
+import torch
 
 @DETECTORS.register_module()
 class NanoDetMagic(BaseDetector):
@@ -71,7 +71,16 @@ class NanoDetMagic(BaseDetector):
         return loss_states
 
     def forward_test(self, imgs, img_metas, **kwargs):
+        ids = [meta['img_info']['id'] for meta in img_metas]
+        for idx in ids:
+            pass
         feature_32, _, _ = self.extract_feat(imgs)
         preds_box = self.head(feature_32)
         det_results = self.head.post_process(preds_box, img_metas)
         return det_results
+
+    def simple_test(self, img, img_metas, **kwargs):
+        return super().simple_test(img, img_metas, **kwargs)
+
+    def aug_test(self, imgs, img_metas, **kwargs):
+        return super().aug_test(imgs, img_metas, **kwargs)

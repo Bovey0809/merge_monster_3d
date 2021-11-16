@@ -41,7 +41,6 @@ test_pipeline = [
     dict(
         type='ColorAugNorm',
         normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
-    dict(type='Pad', size_divisor=32),
     dict(type='ImageToTensor', keys=['img']),
     dict(
         type='Collect',
@@ -67,7 +66,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        samples_per_gpu=40,
+        samples_per_gpu=80,
         ann_file=data_root + 'annotations/instances_val2017.json',
         img_prefix=data_root + 'val2017/',
         seg_prefix=data_root + 'panoptic_stuff_val2017/',

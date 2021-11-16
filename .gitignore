@@ -6,7 +6,8 @@ __pycache__/
 debug/
 # C extensions
 *.so
-
+*.npy
+*.json
 # Distribution / packaging
 .Python
 build/
