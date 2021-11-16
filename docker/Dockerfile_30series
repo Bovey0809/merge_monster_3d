@@ -15,7 +15,8 @@ RUN pip install mmsegmentation==0.18.0
 
 # Install MMDetection3D
 RUN conda clean --all
-RUN git clone https://github.com/Bovey0809/merge_monster_3d.git /mmdetection3d && cd /mmdetection3d && git reset --hard 640eab2f7cfb2865250aff2b048c577c7934ed50
+ARG GITHUB_TOKEN
+RUN git clone https://${GITHUB_TOKEN}@github.com/Bovey0809/merge_monster_3d.git /mmdetection3d
 
 WORKDIR /mmdetection3d
 ENV FORCE_CUDA="1"

@@ -8,12 +8,12 @@ Boom!
 ## Build Env
 
 NOTE: Please download and process the data according to 
-[mmdetction3d dataset prepare](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html).
+[mmdetction3d dataset prepare](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html). Please assign you github token to GITHUB_TOKEN when you run docker build. 
 
 ```bash
 git clone https://github.com/Bovey0809/merge_monster_3d.git
 cd merge_monster_3d
-docker build --network=host -f docker/Dockerfile -t mergenet .
+docker build --network=host -f docker/Dockerfile -t mergenet . --build-arg GITHUB_TOKEN=your_token
 docker run --gpus all --ipc=host -it -v $HOME/data:/mmdetection3d/data -v $HOME/work_dirs/:/mmdetection3d/work_dirs mergenet
 ```
 
