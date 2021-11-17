@@ -170,6 +170,7 @@ class Custom3DDataset(Dataset):
         input_dict = self.get_data_info(index)
         self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
+
         return example
 
     @classmethod

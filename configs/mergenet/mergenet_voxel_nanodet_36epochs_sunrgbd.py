@@ -133,6 +133,7 @@ train_pipeline = [
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),
+    # dict(type='NanoDetResize', size=(512, 512), keep_ratio=True),
     dict(
         type='LoadPointsFromFile',
         coord_type='DEPTH',
@@ -145,7 +146,9 @@ test_pipeline = [
         pts_scale_ratio=1,
         flip=False,
         transforms=[
-            dict(type='Resize', keep_ratio=True),
+            dict(type='NanoDetResize', size=(512, 512), keep_ratio=True),
+            dict(type='Normalize', **img_norm_cfg),
+            dict(type='Pad', size_divisor=32),
             dict(
                 type='GlobalRotScaleTrans',
                 rot_range=[0, 0],
