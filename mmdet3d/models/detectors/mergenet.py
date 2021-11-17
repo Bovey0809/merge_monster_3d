@@ -254,8 +254,9 @@ class MergeNet(Base3DDetector):
                       gt_bboxes_3d=None,
                       gt_labels_3d=None,
                       gt_bboxes_ignore=None):
-        # img feature
-        img_features, img_bbox = self.extrac_img_feat(img)
+        if self.with_img_backbone:
+            # img feature
+            img_features, img_bbox = self.extrac_img_feat(img)
 
         # points feature
         # points = torch.stack(points)
