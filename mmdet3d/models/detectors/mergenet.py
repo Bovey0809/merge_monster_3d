@@ -78,9 +78,19 @@ class MergeNet(Base3DDetector):
         self.upsampe_style = upsample_style
         self.merge_style = merge_style
         self.img_model_weight = img_model_weight
+        weight_parameters=torch.ones(1,requires_grad=True)*0.2
+        self.weight_params=weight_parameters
         self.merge_conv2d = nn.Sequential(
             nn.Conv2d(224, 128, 3, 1, 1),
             nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True),
+            nn.ReLU())
+        self.sum_img_conv2d=nn.Sequential(
+            nn.Conv2d(96, 128, 3, 1, 1),
+            nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True),
+            nn.ReLU())
+        self.sum_merge_conv2d=nn.Sequential(
+            nn.Conv2d(128, 128, 3, 1, 1),
+            nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True),
             nn.ReLU())
         self.BN2D_point = nn.BatchNorm2d(
             128, eps=1e-05, momentum=0.1, affine=True)
@@ -208,14 +218,10 @@ class MergeNet(Base3DDetector):
         #     x=[x[0]+xconv2]
         return x, point_misc
 
-  
-
     def merge_features(self, img_features, point_feat):
         """merge image_features and point_cloud_features with different methods, such as concat, sum, multiply,
         before merging features, all features are normalized to be [-1,1]"""
-        # self.BN2D_point=torch.nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True)
-        # self.BN2D_image=torch.nn.BatchNorm2d(96,eps=1e-05,momentum=0.1,affine=True)
-
+    
         shape = point_feat.shape
 
         if self.normal_style == 'BN':
