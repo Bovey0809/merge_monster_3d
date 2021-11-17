@@ -109,6 +109,7 @@ train_pipeline = [
         contrast=[0.6, 1.4],
         saturation=[0.5, 1.2],
         normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
+    dict(type='AlignMatrix', align_matrix=[[1, 0, 0], [0, 0, -1], [0, 1, 0]]),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -187,7 +188,7 @@ eval_pipeline = [
 
 data = dict(
     samples_per_gpu=8,
-    workers_per_gpu=8,
+    workers_per_gpu=0,
     train=dict(dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
