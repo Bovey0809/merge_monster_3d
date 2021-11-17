@@ -73,30 +73,29 @@ class MergeNet(Base3DDetector):
         # if img_pretrained:
         #     state_dict = torch.load(img_pretrained)
         #     self.load_state_dict(state_dict=state_dict, strict=False)
-        self.magic_merge = magic_merge       
+        self.magic_merge = magic_merge
         self.normal_style = normal_style
         self.upsampe_style = upsample_style
         self.merge_style = merge_style
         self.img_model_weight = img_model_weight
-        weight_parameters=torch.ones(1,requires_grad=True)*0.2
-        self.weight_params=weight_parameters
+        weight_parameters = torch.ones(1, requires_grad=True) * 0.2
+        self.weight_params = weight_parameters
         self.merge_conv2d = nn.Sequential(
             nn.Conv2d(224, 128, 3, 1, 1),
             nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True),
             nn.ReLU())
-        self.sum_img_conv2d=nn.Sequential(
+        self.sum_img_conv2d = nn.Sequential(
             nn.Conv2d(96, 128, 3, 1, 1),
-            nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True),
             nn.ReLU())
-        self.sum_merge_conv2d=nn.Sequential(
+        self.sum_merge_conv2d = nn.Sequential(
             nn.Conv2d(128, 128, 3, 1, 1),
-            nn.BatchNorm2d(128,eps=1e-05,momentum=0.1,affine=True),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True),
             nn.ReLU())
         self.BN2D_point = nn.BatchNorm2d(
             128, eps=1e-05, momentum=0.1, affine=True)
         self.BN2D_image = nn.BatchNorm2d(
             96, eps=1e-05, momentum=0.1, affine=True)
-
 
     def extract_feat(self, imgs):
         "mmdetection3d needs such abstract method."
@@ -221,7 +220,7 @@ class MergeNet(Base3DDetector):
     def merge_features(self, img_features, point_feat):
         """merge image_features and point_cloud_features with different methods, such as concat, sum, multiply,
         before merging features, all features are normalized to be [-1,1]"""
-    
+
         shape = point_feat.shape
 
         if self.normal_style == 'BN':
@@ -243,7 +242,6 @@ class MergeNet(Base3DDetector):
             a = 0
 
         return [merged_feature]
-
 
     def forward_train(self,
                       img,
@@ -278,7 +276,6 @@ class MergeNet(Base3DDetector):
         else:
             x = point_features
 
-
         pred_dict = self.centernet3d_head(x)
 
         losses = dict()
@@ -290,8 +287,9 @@ class MergeNet(Base3DDetector):
     def simple_test(self, points, img_metas, imgs, rescale=False):
         """Testing for one img and one point cloud.
         """
-        # img feature
-        img_features, img_bbox = self.extrac_img_feat(imgs)
+        if self.with_img_backbone:
+            # img feature
+            img_features, img_bbox = self.extrac_img_feat(imgs)
 
         # points feature
         # points = torch.stack(points)
@@ -308,7 +306,6 @@ class MergeNet(Base3DDetector):
             x = self.merge_features(img_features[-1], point_features[0])
         else:
             x = point_features
-
 
         pred_dict = self.centernet3d_head(x)
         bbox_list = self.centernet3d_head.get_bboxes(pred_dict, img_metas)
