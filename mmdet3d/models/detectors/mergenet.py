@@ -73,7 +73,7 @@ class MergeNet(Base3DDetector):
         # if img_pretrained:
         #     state_dict = torch.load(img_pretrained)
         #     self.load_state_dict(state_dict=state_dict, strict=False)
-        self.magic_merge = magic_merge
+        self.magic_merge = magic_merge       
         self.normal_style = normal_style
         self.upsampe_style = upsample_style
         self.merge_style = merge_style
@@ -86,6 +86,7 @@ class MergeNet(Base3DDetector):
             128, eps=1e-05, momentum=0.1, affine=True)
         self.BN2D_image = nn.BatchNorm2d(
             96, eps=1e-05, momentum=0.1, affine=True)
+
 
     def extract_feat(self, imgs):
         "mmdetection3d needs such abstract method."
@@ -207,15 +208,7 @@ class MergeNet(Base3DDetector):
         #     x=[x[0]+xconv2]
         return x, point_misc
 
-    # def merge(self, img_features, point_feat, method='cat'):
-    #     assert method in ('cat', 'upsample', 'deconv')
-    #     # TODO Add different method for trail.
-    #     shape = point_feat[0].shape
-    #     new_img_features = F.interpolate(
-    #         img_features[0], size=[shape[2], shape[3]])
-    #     merged_feature0 = torch.cat((new_img_features, point_feat[0]), 1)
-    #     merged_feature = self.magic_merge(merged_feature0)
-    #     return merged_feature
+  
 
     def merge_features(self, img_features, point_feat):
         """merge image_features and point_cloud_features with different methods, such as concat, sum, multiply,
@@ -244,6 +237,7 @@ class MergeNet(Base3DDetector):
             a = 0
 
         return [merged_feature]
+
 
     def forward_train(self,
                       img,
@@ -277,6 +271,7 @@ class MergeNet(Base3DDetector):
         else:
             x = point_features
 
+
         pred_dict = self.centernet3d_head(x)
 
         losses = dict()
@@ -306,6 +301,7 @@ class MergeNet(Base3DDetector):
             x = self.merge_features(img_features[-1], point_features[0])
         else:
             x = point_features
+
 
         pred_dict = self.centernet3d_head(x)
         bbox_list = self.centernet3d_head.get_bboxes(pred_dict, img_metas)
