@@ -188,7 +188,7 @@ eval_pipeline = [
 
 data = dict(
     samples_per_gpu=8,
-    workers_per_gpu=0,
+    workers_per_gpu=16,
     train=dict(dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
