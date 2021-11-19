@@ -8,7 +8,7 @@ class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
 num_class = len(class_names)
-point_cloud_range = [-6.9, -4.8, -0.1, 6.6, 7.6, 9.0]  # xyzxyz to voxilize
+point_cloud_range = [-7.0, -4.8, -0.1, 6.6, 7.6, 9.0]  # xyzxyz to voxilize
 voxel_size = [0.1, 0.1, 0.1]  # For Loss and Gt calculation
 
 # use caffe img_norm
@@ -31,15 +31,15 @@ model = dict(
     middle_encoder=dict(
         type='SparseEncoder',
         in_channels=4,
-        sparse_shape=[91, 124, 135],  # z y x
+        sparse_shape=[91, 124, 136],  # z y x
         base_channels=16,
         output_channels=128,
         encoder_channels=((16, ), (16, 16, 16), (16, 16, 16)),
-        encoder_paddings=((1, ), (1, 1, 1), (0, 0, 0)),
+        encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1)),
         block_type='conv_module'),  # 
     backbone=dict(
         type='SECONDFPNDCN',
-        in_channels=1280,
+        in_channels=1408,
         layer_nums=[3],
         layer_strides=[1],
         num_filters=[128],
@@ -56,7 +56,7 @@ model = dict(
             voxel_size=voxel_size,
             pc_range=point_cloud_range,
             num_dir_bins=0,
-            downsample_ratio=4.0,
+            downsample_ratio=2.0,
             min_overlap=0.001,
             keypoint_sensitive=False,
         ),
@@ -130,6 +130,7 @@ test_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
+    dict(type='AlignMatrix', align_matrix=[[1, 0, 0], [0, 0, -1], [0, 1, 0]]),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(512, 512),
