@@ -22,6 +22,51 @@ from .warp import get_resize_matrix, get_translate_matrix, warp_and_resize, warp
 
 
 @PIPELINES.register_module()
+class AlignMatrix:
+    """Align Matrix followed by alignmatrix for all points.
+
+    Attributes:
+        rot_mat: list of matrix.
+        
+    """
+
+    def _rot_bbox_points(self, input_dict, rot_mat):
+        """Private function to rotate bounding boxes and points.
+
+            Args:
+                input_dict (dict): Result dict from loading pipeline.
+
+            Returns:
+                dict: Results after rotation, 'points', 'pcd_rotation' \
+                    and keys in input_dict['bbox3d_fields'] are updated \
+                    in the result dict.
+            """
+        # if no bbox in input_dict, only rotate points
+        input_dict['points'].rotate(rot_mat.T)
+        
+        if len(input_dict['bbox3d_fields']) == 0:
+            rot_mat_T = rot_mat.T
+            input_dict['pcd_rotation'] = rot_mat_T
+            return
+
+        # rotate points with bboxes
+        for key in input_dict['bbox3d_fields']:
+            if len(input_dict[key].tensor) != 0:
+                input_dict[key].rotate(rot_mat.T)
+                input_dict['pcd_rotation'] = rot_mat.T
+
+    def __init__(self, align_matrix, rotate_bbox=True) -> None:
+        self.axis_align_matrix = np.array(align_matrix)
+        self.rotate_bbox = rotate_bbox
+
+    def __call__(self, input_dict):
+        input_dict['axis_align_matrix'] = self.axis_align_matrix
+        rot_mat = self.axis_align_matrix[:3, :3]
+        self._rot_bbox_points(input_dict, rot_mat)
+        return input_dict
+
+
+@PIPELINES.register_module()
 class ColorAugNorm(object):
     """Color and Norm
     """

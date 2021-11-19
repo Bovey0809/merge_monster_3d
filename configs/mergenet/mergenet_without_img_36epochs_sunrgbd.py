@@ -1,7 +1,7 @@
 _base_ = [
     '../_base_/datasets/sunrgbd-3d-10class.py',
-    '../_base_/schedules/schedule_3x.py', '../_base_/default_runtime.py',
-    '../_base_/models/nanodet.py'
+    '../_base_/schedules/schedule_3x.py',
+    '../_base_/default_runtime.py',
 ]
 
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
@@ -17,11 +17,9 @@ img_norm_cfg = dict(
 
 model = dict(
     type='MergeNet',
-    merge_method=True,
-    normal_style='BN',
-    upsample_style='interpolate',
-    merge_style='concat',
-    img_pretrained='work_dirs/nanodet/model_last.pth',
+    merge_method='cat',
+    merge_in_channels=256,
+    img_model_weight='work_dirs/nanodet/model_last.pth',
     voxel_layer=dict(
         max_num_points=5,
         point_cloud_range=point_cloud_range,
@@ -101,9 +99,6 @@ train_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
-    dict(
-        type='WarpMatrix',
-        warp_matrix=[[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]),
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
@@ -114,6 +109,7 @@ train_pipeline = [
         contrast=[0.6, 1.4],
         saturation=[0.5, 1.2],
         normalize=[[127.0, 127.0, 127.0], [128.0, 128.0, 128.0]]),
+    dict(type='AlignMatrix', align_matrix=[[1, 0, 0], [0, 0, -1], [0, 1, 0]]),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -132,12 +128,13 @@ train_pipeline = [
         type='Collect3D',
         keys=[
             'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-            'gt_labels_3d', 'warp_matrix'
+            'gt_labels_3d'
         ])
 ]
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),
+    # dict(type='NanoDetResize', size=(512, 512), keep_ratio=True),
     dict(
         type='LoadPointsFromFile',
         coord_type='DEPTH',
@@ -145,15 +142,14 @@ test_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2]),
     dict(
-        type='WarpMatrix',
-        warp_matrix=[[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]),
-    dict(
         type='MultiScaleFlipAug3D',
         img_scale=(512, 512),
         pts_scale_ratio=1,
         flip=False,
         transforms=[
-            dict(type='Resize', keep_ratio=True),
+            dict(type='NanoDetResize', size=(512, 512), keep_ratio=True),
+            dict(type='Normalize', **img_norm_cfg),
+            dict(type='Pad', size_divisor=32),
             dict(
                 type='GlobalRotScaleTrans',
                 rot_range=[0, 0],
@@ -192,7 +188,7 @@ eval_pipeline = [
 
 data = dict(
     samples_per_gpu=8,
-    workers_per_gpu=8,
+    workers_per_gpu=16,
     train=dict(dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
