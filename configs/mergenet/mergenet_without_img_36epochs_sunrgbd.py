@@ -177,7 +177,7 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=8,
+    samples_per_gpu=16,
     workers_per_gpu=16,
     train=dict(dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)),
     val=dict(pipeline=test_pipeline),
@@ -185,3 +185,5 @@ data = dict(
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
 gpu_ids = range(0, 2)
+load_from = 'work_dirs/merge_net/epoch_199.pth'
+optimizer = dict(type='Adam', lr=0.01)
