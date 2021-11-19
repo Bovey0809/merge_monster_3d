@@ -1,19 +1,15 @@
 _base_ = [
     '../_base_/datasets/sunrgbd-3d-10class.py',
     '../_base_/schedules/schedule_3x.py', '../_base_/default_runtime.py',
-    '../_base_/models/imvotenet_image_base_yolo.py'
+    '../_base_/models/imvotenet_image_base_yolo.py',
+    '../_base_/models/nanodet.py'
 ]
-
-lr = 0.008
-optimizer = dict(type='AdamW', lr=lr, weight_decay=0.01)
-lr_config = dict(policy='step', warmup=None, step=[24, 32])
-
 
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
 num_class = len(class_names)
-point_cloud_range = [-7.08, -0.6, -7.5, 7, 9.0, 4.5]  # xyzxyz to voxilize
+point_cloud_range = [-7.08, -0.6, -7.5, 7, 9.0, 4.5]  # xyzxyz min max to voxilize
 voxel_size = [0.01, 0.006, 0.3]  # For Loss and Gt calculation
 
 # use caffe img_norm
@@ -21,12 +17,12 @@ img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 
 model = dict(
-    type='MergeNet',
-    load_img_dect_weight='/mmdetection3d/work_dirs/yolov3_mobilenetv2_changed.pth',
-    merge=False,
+    type='MergeNetFusion',
+    magic_merge='imvotenet',  #or 'voxel','imvotenet'
     normal_style='BN',
-    upsampe_style='interpolate',
+    upsample_style='interpolate',
     merge_style='concat',
+    img_model_weight='/mmdetection3d/work_dirs/yolov3_mobilenetv2_changed.pth',
     voxel_layer=dict(
         max_num_points=5,
         point_cloud_range=point_cloud_range,
@@ -45,6 +41,8 @@ model = dict(
         out_channels=[128]),
     pts_backbone=dict(
         type='PointNet2SASSG',
+        merge_method='image',
+        upsample_method1='ConvTranspose2d',
         in_channels=4,
         num_points=(2048, 1024, 512, 256),  # points for SAMPLER.
         radius=(0.2, 0.4, 0.8, 1.2),
@@ -122,8 +120,9 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    # dict(type='PointSample', num_points=20000),
+    # dict(type='PointSample', num_points=20000),#todo
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointSample', num_points=20000),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
@@ -165,6 +164,7 @@ test_pipeline = [
             # dict(type='PointSample', num_points=20000),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(type='PointSample', num_points=20000),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
@@ -189,12 +189,14 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=8,
+    samples_per_gpu=6,
     workers_per_gpu=8,
     train=dict(dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
 evaluation = dict(pipeline=eval_pipeline)
 find_unused_parameters = True
-gpu_ids = range(0, 2)
-#load_from = 'work_dirs/merge_net/72_epochs/merge_net/latest.pth'
+# gpu_ids = range(0, 2)
+# load_from = 'work_dirs/merge_net/epoch_199.pth'
+lr = 0.00001  # max learning rate
+optimizer = dict(type='AdamW', lr=lr, weight_decay=0.01)

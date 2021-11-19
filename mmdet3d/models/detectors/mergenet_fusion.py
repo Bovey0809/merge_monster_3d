@@ -10,7 +10,7 @@ from .base import Base3DDetector
 
 
 @DETECTORS.register_module()
-class MergeNet(Base3DDetector):
+class MergeNetFusion(Base3DDetector):
 
     def __init__(self,
                  voxel_layer=None,
@@ -36,7 +36,7 @@ class MergeNet(Base3DDetector):
                  upsample_style=None,
                  merge_style=None,
                  img_model_weight=None):
-        super(MergeNet, self).__init__(init_cfg=init_cfg)
+        super(MergeNetFusion, self).__init__(init_cfg=init_cfg)
 
         # self.merge_method = merge_method
         # point branch
@@ -272,7 +272,7 @@ class MergeNet(Base3DDetector):
                       gt_labels_3d=None,
                       gt_bboxes_ignore=None):
         # img feature
-        img_features, img_bbox = self.extrac_img_feat(img)
+        # img_features, img_bbox = self.extrac_img_feat(img)
 
         # points feature
         # points = torch.stack(points)
@@ -288,17 +288,21 @@ class MergeNet(Base3DDetector):
         # point_features, _ = self.extract_voxel_feat(points) #todo
         # shape=point_features[0].shape
 
+        img_features, img_bbox = self.extrac_img_feat(img)
+
         # merge
         if self.magic_merge=='voxel':
             point_features, _ = self.extract_voxel_feat(points) #todo
             x = self.merge_features(img_features[-1], point_features[0])
         elif self.magic_merge=='imvotenet':
             points = torch.stack(points)
+
             seeds_3d, seed_3d_features, seed_indices,merge_fppoint_features = self.extract_pts_feat(
                 points)
             x = self.merge_features(img_features[-1], merge_fppoint_features)
         else:
             x, _ = self.extract_voxel_feat(points) #todo
+
 
         pred_dict = self.centernet3d_head(x)
 
@@ -325,16 +329,16 @@ class MergeNet(Base3DDetector):
         # point_features, _ = self.extract_voxel_feat(points=points)
 
         # merge
-        # merge
         if self.magic_merge=='voxel':
             point_features, _ = self.extract_voxel_feat(points) #todo
             x = self.merge_features(img_features[-1], point_features[0])
         elif self.magic_merge=='imvotenet':
+            points = torch.stack(points)
             seeds_3d, seed_3d_features, seed_indices,merge_fppoint_features = self.extract_pts_feat(
                 points)
             x = self.merge_features(img_features[-1], merge_fppoint_features)
         else:
-            x = point_features
+            x, _ = self.extract_voxel_feat(points) #todo
 
         pred_dict = self.centernet3d_head(x)
         bbox_list = self.centernet3d_head.get_bboxes(pred_dict, img_metas)

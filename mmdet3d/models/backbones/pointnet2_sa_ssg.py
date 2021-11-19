@@ -5,6 +5,8 @@ from torch import nn as nn
 
 from mmdet3d.ops import PointFPModule, build_sa_module
 from mmdet.models import BACKBONES
+
+from mmdet3d.ops.pointnet_modules.point_fp_module import PointFPModule_2D
 from .base_pointnet import BasePointNet
 
 
@@ -45,8 +47,13 @@ class PointNet2SASSG(BasePointNet):
                      pool_mod='max',
                      use_xyz=True,
                      normalize_xyz=True),
-                 init_cfg=None):
+                 init_cfg=None,
+                merge_method=None,
+                upsample_method1=None):
         super().__init__(init_cfg=init_cfg)
+        self.merge_method=merge_method
+        self.upsample_method1=upsample_method1
+
         self.num_sa = len(sa_channels)
         self.num_fp = len(fp_channels)
 
@@ -78,13 +85,24 @@ class PointNet2SASSG(BasePointNet):
 
         fp_source_channel = skip_channel_list.pop()
         fp_target_channel = skip_channel_list.pop()
-        for fp_index in range(len(fp_channels)):
-            cur_fp_mlps = list(fp_channels[fp_index])
-            cur_fp_mlps = [fp_source_channel + fp_target_channel] + cur_fp_mlps
-            self.FP_modules.append(PointFPModule(mlp_channels=cur_fp_mlps))
-            if fp_index != len(fp_channels) - 1:
-                fp_source_channel = cur_fp_mlps[-1]
-                fp_target_channel = skip_channel_list.pop()
+        if self.merge_method=='image':
+            for fp_index in range(len(fp_channels)):
+                cur_fp_mlps = list(fp_channels[fp_index])
+                cur_fp_mlps = [fp_source_channel + fp_target_channel] + cur_fp_mlps
+                self.FP_modules.append(PointFPModule_2D(mlp_channels=cur_fp_mlps,upsample_method=upsample_method1))
+                if fp_index != len(fp_channels) - 1:
+                    fp_source_channel = cur_fp_mlps[-1]
+                    fp_target_channel = skip_channel_list.pop()
+        else:
+            for fp_index in range(len(fp_channels)):
+                cur_fp_mlps = list(fp_channels[fp_index])
+                cur_fp_mlps = [fp_source_channel + fp_target_channel] + cur_fp_mlps
+                self.FP_modules.append(PointFPModule(mlp_channels=cur_fp_mlps))
+                if fp_index != len(fp_channels) - 1:
+                    fp_source_channel = cur_fp_mlps[-1]
+                    fp_target_channel = skip_channel_list.pop()
+
+        # self.magic_merge=magic_merge
 
     @auto_fp16(apply_to=('points', ))
     def forward(self, points):
@@ -113,28 +131,40 @@ class PointNet2SASSG(BasePointNet):
         sa_xyz = [xyz]
         sa_features = [features]
         sa_indices = [indices]
+        merge_point_features=[]
 
         for i in range(self.num_sa):
-            cur_xyz, cur_features, cur_indices = self.SA_modules[i](
+            cur_xyz, cur_features, cur_indices, merge_feature= self.SA_modules[i](
                 sa_xyz[i], sa_features[i])
             sa_xyz.append(cur_xyz)
             sa_features.append(cur_features)
             sa_indices.append(
                 torch.gather(sa_indices[-1], 1, cur_indices.long()))
+            merge_point_features.append(merge_feature)
 
         fp_xyz = [sa_xyz[-1]]
         fp_features = [sa_features[-1]]
         fp_indices = [sa_indices[-1]]
+        merge_fp_features = [merge_point_features[-1]]
 
-        for i in range(self.num_fp):
-            fp_features.append(self.FP_modules[i](
-                sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
-                sa_features[self.num_sa - i - 1], fp_features[-1]))
-            fp_xyz.append(sa_xyz[self.num_sa - i - 1])
-            fp_indices.append(sa_indices[self.num_sa - i - 1])
+        if self.merge_method=='image':
+            for i in range(self.num_fp):
+                merge_fp_features.append(self.FP_modules[i](
+                    # sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
+                    merge_point_features[-i - 2], merge_fp_features[-1]))
+                fp_xyz.append(sa_xyz[-i - 2])
+                fp_indices.append(sa_indices[-i - 2])
+        else:
+            for i in range(self.num_fp):
+                fp_features.append(self.FP_modules[i](
+                    sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
+                    sa_features[self.num_sa - i - 1], fp_features[-1]))
+                fp_xyz.append(sa_xyz[self.num_sa - i - 1])
+                fp_indices.append(sa_indices[self.num_sa - i - 1])
 
         ret = dict(
             fp_xyz=fp_xyz,
+            merge_fp_features=merge_fp_features,
             fp_features=fp_features,
             fp_indices=fp_indices,
             sa_xyz=sa_xyz,

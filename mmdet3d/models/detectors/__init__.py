@@ -17,11 +17,12 @@ from .voxelnet import VoxelNet
 from .centernet3d import CenterNet3D
 from .mergenet import MergeNet
 from .magic_nanodet import NanoDetMagic
+from .mergenet_fusion import MergeNetFusion
 
 __all__ = [
     'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
     'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',
     'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
     'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'CenterNet3D', 'MergeNet',
-    'NanoDetMagic'
-]
+    'NanoDetMagic', 'MergeNetFusion'
+    ]

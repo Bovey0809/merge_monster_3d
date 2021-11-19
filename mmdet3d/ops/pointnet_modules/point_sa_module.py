@@ -199,6 +199,9 @@ class BasePointSAModule(nn.Module):
             # (B, mlp[-1], num_point, nsample)
             new_features = self.mlps[i](grouped_results)
 
+            #get this feature for fusion with point and image features
+            merge_feature=new_features
+
             # this is a bit hack because PAConv outputs two values
             # we take the first one as feature
             if isinstance(self.mlps[i][0], PAConv):
@@ -209,7 +212,7 @@ class BasePointSAModule(nn.Module):
             new_features = self._pool_features(new_features)
             new_features_list.append(new_features)
 
-        return new_xyz, torch.cat(new_features_list, dim=1), indices
+        return new_xyz, torch.cat(new_features_list, dim=1), indices, merge_feature
 
 
 @SA_MODULES.register_module()
