@@ -198,6 +198,7 @@ class MergeNet(Base3DDetector):
         voxels = torch.cat(voxels, dim=0)
         num_points = torch.cat(num_points, dim=0)
         coors_batch = []
+        # NOTE: Pad the coors to (batch id, x_idx, y_idx, z_idx)
         for i, coor in enumerate(coors):
             coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
             coors_batch.append(coor_pad)
@@ -212,9 +213,6 @@ class MergeNet(Base3DDetector):
         point_misc = None
         x = self.middle_encoder(voxel_features, coors, batch_size)
         x = self.backbone(x)
-        # print("x shape",x[0].shape)
-        # if xconv2 is not None:
-        #     x=[x[0]+xconv2]
         return x, point_misc
 
     def merge_features(self, img_features, point_feat):

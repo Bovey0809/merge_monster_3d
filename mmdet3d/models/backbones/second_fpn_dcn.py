@@ -13,8 +13,10 @@ from torchvision.models import resnet
 from mmcv.cnn import (build_norm_layer, build_upsample_layer, constant_init,
                       is_norm, kaiming_init)
 
+
 @BACKBONES.register_module()
 class SECONDFPNDCN(nn.Module):
+
     def __init__(self,
                  in_channels=128,
                  layer_nums=(3, 5, 5),
@@ -33,8 +35,7 @@ class SECONDFPNDCN(nn.Module):
         self.upsample_strides = upsample_strides
         self.num_upsample_filters = out_channels
         self.num_input_features = in_channels
-        self.use_dcn=use_dcn
-
+        self.use_dcn = use_dcn
 
         assert len(layer_strides) == len(layer_nums)
         assert len(num_filters) == len(layer_nums)
@@ -43,14 +44,19 @@ class SECONDFPNDCN(nn.Module):
 
         must_equal_list = []
         for i in range(len(upsample_strides)):
-            must_equal_list.append(upsample_strides[i] / np.prod(
-                layer_strides[:i + self.upsample_start_idx + 1]))
+            must_equal_list.append(
+                upsample_strides[i] /
+                np.prod(layer_strides[:i + self.upsample_start_idx + 1]))
         for val in must_equal_list:
             assert val == must_equal_list[0]
 
-        BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
+        BatchNorm2d = change_default_args(
+            eps=1e-3, momentum=0.01)(
+                nn.BatchNorm2d)
         ConvTranspose2d = change_default_args(bias=False)(nn.ConvTranspose2d)
-        self.activation_fcn=change_default_args(negative_slope=0.01,inplace=True)(nn.LeakyReLU)
+        self.activation_fcn = change_default_args(
+            negative_slope=0.01, inplace=True)(
+                nn.LeakyReLU)
 
         in_filters = [in_channels, *num_filters[:-1]]
 
@@ -68,47 +74,55 @@ class SECONDFPNDCN(nn.Module):
                 stride = upsample_strides[i - self.upsample_start_idx]
                 stride = np.round(stride).astype(np.int64)
                 if self.use_dcn:
-                    deblock=Sequential(ModulatedDeformConvBlock(num_out_filters,num_out_filters,act_fn=self.activation_fcn))
-                    deblock.add(ConvTranspose2d(num_out_filters,
-                            self.num_upsample_filters[i - self.upsample_start_idx],
+                    deblock = Sequential(
+                        ModulatedDeformConvBlock(
+                            num_out_filters,
+                            num_out_filters,
+                            act_fn=self.activation_fcn))
+                    deblock.add(
+                        ConvTranspose2d(
+                            num_out_filters,
+                            self.num_upsample_filters[i -
+                                                      self.upsample_start_idx],
                             stride,
-                            stride=stride),)
-                    deblock.add(BatchNorm2d(self.num_upsample_filters[i -self.upsample_start_idx]))
+                            stride=stride), )
+                    deblock.add(
+                        BatchNorm2d(self.num_upsample_filters[
+                            i - self.upsample_start_idx]))
                     deblock.add(self.activation_fcn())
                 else:
-                    deblock=Sequential(ConvTranspose2d(num_out_filters,
-                            self.num_upsample_filters[i - self.upsample_start_idx],
+                    deblock = Sequential(
+                        ConvTranspose2d(
+                            num_out_filters,
+                            self.num_upsample_filters[i -
+                                                      self.upsample_start_idx],
                             stride,
                             stride=stride),
-                            BatchNorm2d(self.num_upsample_filters[i -self.upsample_start_idx]),
-                            self.activation_fcn())
+                        BatchNorm2d(self.num_upsample_filters[
+                            i - self.upsample_start_idx]),
+                        self.activation_fcn())
 
                 deblocks.append(deblock)
         self.blocks = nn.ModuleList(blocks)
         self.deblocks = nn.ModuleList(deblocks)
 
-
-
-
     def _make_layer(self, inplanes, planes, num_blocks, stride=1):
 
         BatchNorm2d = change_default_args(
-                eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
+            eps=1e-3, momentum=0.01)(
+                nn.BatchNorm2d)
         Conv2d = change_default_args(bias=False)(nn.Conv2d)
 
         block = Sequential(
-            Conv2d(inplanes, planes, 3, padding=1,stride=stride),
-            BatchNorm2d(planes),
-            self.activation_fcn())
+            Conv2d(inplanes, planes, 3, padding=1, stride=stride),
+            BatchNorm2d(planes), self.activation_fcn())
 
         for j in range(num_blocks):
-            block.add(Conv2d(planes, planes, 3, padding=1,dilation=1))
+            block.add(Conv2d(planes, planes, 3, padding=1, dilation=1))
             block.add(BatchNorm2d(planes))
             block.add(self.activation_fcn())
 
         return block, planes
-
-
 
     @property
     def downsample_factor(self):
@@ -120,7 +134,7 @@ class SECONDFPNDCN(nn.Module):
     def forward(self, x):
         ups = []
         stage_outputs = []
-        out=[]
+        out = []
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
             stage_outputs.append(x)
@@ -130,9 +144,7 @@ class SECONDFPNDCN(nn.Module):
             else:
                 out.append(stage_outputs[-1])
 
-
         x = [torch.cat(out, dim=1)]
-
 
         return x
 
@@ -150,4 +162,3 @@ class SECONDFPNDCN(nn.Module):
             from mmdet3d.utils import get_root_logger
             logger = get_root_logger()
             load_checkpoint(self, pretrained, strict=False, logger=logger)
-

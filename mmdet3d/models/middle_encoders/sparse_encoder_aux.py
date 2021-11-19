@@ -4,7 +4,7 @@ import torch
 from ..builder import MIDDLE_ENCODERS
 from mmdet3d.ops import three_interpolate, three_nn
 from torchplus.tools import change_default_args
-from ..losses.center_loss import weighted_sigmoid_focal_loss,weighted_smoothl1
+from ..losses.center_loss import weighted_sigmoid_focal_loss, weighted_smoothl1
 
 BatchNorm1d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm1d)
 SpConv3d = change_default_args(bias=False)(spconv.SparseConv3d)
@@ -13,25 +13,28 @@ SubMConv3d = change_default_args(bias=False)(spconv.SubMConv3d)
 
 @MIDDLE_ENCODERS.register_module()
 class SparseEncoder_AUX(nn.Module):
-    def __init__(self,in_channels=4,sparse_shape=[40, 1600, 1408],out_channels=64):
+
+    def __init__(self,
+                 in_channels=4,
+                 sparse_shape=[40, 1600, 1408],
+                 out_channels=64):
 
         super(SparseEncoder_AUX, self).__init__()
 
-
         self.sparse_shape = sparse_shape
         print(self.sparse_shape)
-        self.backbone = VxNet(in_channels,out_channels)
-        self.num_input_features=in_channels
+        self.backbone = VxNet(in_channels, out_channels)
+        self.num_input_features = in_channels
 
     def forward(self, voxel_features, coors, batch_size):
 
-        points_mean=voxel_features.new_zeros((voxel_features.shape[0],4))
+        points_mean = voxel_features.new_zeros((voxel_features.shape[0], 4))
         points_mean[:, 0] = coors[:, 0]
         points_mean[:, 1:] = voxel_features[:, :3]
 
-
         coors = coors.int()
-        x = spconv.SparseConvTensor(voxel_features, coors, self.sparse_shape, batch_size)
+        x = spconv.SparseConvTensor(voxel_features, coors, self.sparse_shape,
+                                    batch_size)
         x, point_misc = self.backbone(x, points_mean)
 
         x = x.dense()
@@ -40,14 +43,13 @@ class SparseEncoder_AUX(nn.Module):
 
         return x, point_misc
 
-
     def build_aux_target(self, points, gt_boxes3d):
         center_offsets = []
         pts_labels = []
         for i in range(len(gt_boxes3d)):
             boxes3d = gt_boxes3d[i]
             boxes3d = boxes3d.to(points.device)
-            idx = torch.nonzero(points[:, 0] == i)[:,0]
+            idx = torch.nonzero(points[:, 0] == i)[:, 0]
             xyz = points[idx, 1:]
             # print("xyz shape",xyz.shape)
             cls_label = xyz.new_zeros(xyz.shape[0])
@@ -57,7 +59,7 @@ class SparseEncoder_AUX(nn.Module):
             for j in range(boxes3d.tensor.shape[0]):
                 fg_pts_rect = xyz[points_box_id == j]
                 cls_label[points_box_id == j] = 1
-                center3d = boxes3d.gravity_center[j:j+1]  # (x, y, z)
+                center3d = boxes3d.gravity_center[j:j + 1]  # (x, y, z)
                 # idx_box=torch.nonzero(points_box_id==j)
                 reg_label[points_box_id == j] = center3d - fg_pts_rect
 
@@ -95,48 +97,62 @@ class SparseEncoder_AUX(nn.Module):
         reg_weights = pos
         reg_weights = reg_weights / pos_normalizer
 
-        aux_loss_cls = weighted_sigmoid_focal_loss(point_cls.view(-1), rpn_cls_target, weight=cls_weights, avg_factor=1.)
+        aux_loss_cls = weighted_sigmoid_focal_loss(
+            point_cls.view(-1),
+            rpn_cls_target,
+            weight=cls_weights,
+            avg_factor=1.)
         aux_loss_cls /= N
 
-        aux_loss_reg = weighted_smoothl1(point_reg, center_targets, beta=1 / 9., weight=reg_weights[..., None], avg_factor=1.)
+        aux_loss_reg = weighted_smoothl1(
+            point_reg,
+            center_targets,
+            beta=1 / 9.,
+            weight=reg_weights[..., None],
+            avg_factor=1.)
         aux_loss_reg /= N
 
         return dict(
-            aux_loss_cls = aux_loss_cls,
-            aux_loss_reg = aux_loss_reg,
+            aux_loss_cls=aux_loss_cls,
+            aux_loss_reg=aux_loss_reg,
         )
+
 
 class VxNet(nn.Module):
 
-    def __init__(self, num_input_features,num_out_features=64):
+    def __init__(self, num_input_features, num_out_features=64):
         super(VxNet, self).__init__()
         #[40,1600,1408]
 
-
-        self.activation_fcn=change_default_args(negative_slope=0.01,inplace=True)(nn.LeakyReLU)
+        self.activation_fcn = change_default_args(
+            negative_slope=0.01, inplace=True)(
+                nn.LeakyReLU)
 
         self.extra_conv = spconv.SparseSequential(
-            SpConv3d(64, 64, (3,1,1), (2,1,1), indice_key="down3"),
-            BatchNorm1d(64),
-            self.activation_fcn())
+            SpConv3d(64, 64, (3, 1, 1), (2, 1, 1), indice_key="down3"),
+            BatchNorm1d(64), self.activation_fcn())
 
+        self.conv0 = double_conv(
+            num_input_features, 16, 'subm0', activation=self.activation_fcn)
+        self.down0 = stride_conv(
+            16, 32, 'down0', activation=self.activation_fcn)
 
-        self.conv0 = double_conv(num_input_features, 16, 'subm0',activation=self.activation_fcn)
-        self.down0 = stride_conv(16, 32, 'down0',activation=self.activation_fcn)
+        self.conv1 = double_conv(
+            32, 32, 'subm1', activation=self.activation_fcn)  #[20,800,704]
+        self.down1 = stride_conv(
+            32, 64, 'down1', activation=self.activation_fcn)
 
-        self.conv1 = double_conv(32, 32, 'subm1',activation=self.activation_fcn) #[20,800,704]
-        self.down1 = stride_conv(32, 64, 'down1',activation=self.activation_fcn)
+        self.conv2 = triple_conv(
+            64, 64, 'subm2', activation=self.activation_fcn)  #[10,400,352]
+        self.down2 = stride_conv(
+            64, 64, 'down2', activation=self.activation_fcn)
 
-        self.conv2 = triple_conv(64, 64, 'subm2',activation=self.activation_fcn) #[10,400,352]
-        self.down2 = stride_conv(64, 64, 'down2',activation=self.activation_fcn)
-
-        self.conv3 = triple_conv(64, 64, 'subm3',activation=self.activation_fcn)  # #[5,200,176]
-
+        self.conv3 = triple_conv(
+            64, 64, 'subm3', activation=self.activation_fcn)  # #[5,200,176]
 
         self.point_fc = nn.Linear(160, 64, bias=False)
         self.point_cls = nn.Linear(64, 1, bias=False)
         self.point_reg = nn.Linear(64, 3, bias=False)
-
 
     def forward(self, x, points_mean):
 
@@ -149,7 +165,6 @@ class VxNet(nn.Module):
             vx_feat, vx_nxyz = tensor2points(x, voxel_size=(.1, .1, .2))
             # 根据降采样后每个体素中心的xyz坐标计算得到全部体素xyz均值处的特征
             p1 = nearest_neighbor_interpolate(points_mean, vx_nxyz, vx_feat)
-
 
         x = self.down1(x)
         x = self.conv2(x)
@@ -176,45 +191,41 @@ class VxNet(nn.Module):
         return out, (points_mean, point_cls, point_reg)
 
 
-
-
-def single_conv(in_channels, out_channels, indice_key=None,activation=None):
+def single_conv(in_channels, out_channels, indice_key=None, activation=None):
     return spconv.SparseSequential(
         SubMConv3d(in_channels, out_channels, 1, indice_key=indice_key),
+        BatchNorm1d(out_channels), activation())
+
+
+def double_conv(in_channels, out_channels, indice_key=None, activation=None):
+    return spconv.SparseSequential(
+        SubMConv3d(in_channels, out_channels, 3, indice_key=indice_key),
+        BatchNorm1d(out_channels), activation(),
+        SubMConv3d(out_channels, out_channels, 3, indice_key=indice_key),
+        BatchNorm1d(out_channels), activation())
+
+
+def triple_conv(in_channels, out_channels, indice_key=None, activation=None):
+    return spconv.SparseSequential(
+        SubMConv3d(in_channels, out_channels, 3, indice_key=indice_key),
         BatchNorm1d(out_channels),
-       activation())
-
-
-def double_conv(in_channels, out_channels, indice_key=None,activation=None):
-    return spconv.SparseSequential(
-            SubMConv3d(in_channels, out_channels,3,indice_key=indice_key),
-            BatchNorm1d(out_channels),
-            activation(),
-            SubMConv3d(out_channels, out_channels, 3,indice_key=indice_key),
-            BatchNorm1d(out_channels),
-            activation())
-
-
-
-def triple_conv(in_channels, out_channels, indice_key=None,activation=None):
-    return spconv.SparseSequential(
-            SubMConv3d(in_channels, out_channels, 3, indice_key=indice_key),
-            BatchNorm1d(out_channels),
-            activation(),
-            SubMConv3d(out_channels, out_channels, 3, indice_key=indice_key),
-            BatchNorm1d(out_channels),
-            activation(),
-            SubMConv3d(out_channels, out_channels, 3, indice_key=indice_key),
-            BatchNorm1d(out_channels,),
-            activation(),
+        activation(),
+        SubMConv3d(out_channels, out_channels, 3, indice_key=indice_key),
+        BatchNorm1d(out_channels),
+        activation(),
+        SubMConv3d(out_channels, out_channels, 3, indice_key=indice_key),
+        BatchNorm1d(out_channels, ),
+        activation(),
     )
 
-def stride_conv(in_channels, out_channels, indice_key=None,activation=None):
+
+def stride_conv(in_channels, out_channels, indice_key=None, activation=None):
 
     return spconv.SparseSequential(
-            SpConv3d(in_channels, out_channels, 3, 2, padding=1, indice_key=indice_key),
-            BatchNorm1d(out_channels),
-            activation())
+        SpConv3d(
+            in_channels, out_channels, 3, 2, padding=1, indice_key=indice_key),
+        BatchNorm1d(out_channels), activation())
+
 
 def nearest_neighbor_interpolate(unknown, known, known_feats):
     """
@@ -224,15 +235,16 @@ def nearest_neighbor_interpolate(unknown, known, known_feats):
     :return:
         new_features: (n, C) tensor of the features of the unknown features
     """
-    unknown=unknown.unsqueeze(0)
-    known=known.unsqueeze(0)
-    known_feats=known_feats.unsqueeze(0).permute(0,2,1).contiguous()
+    unknown = unknown.unsqueeze(0)
+    known = known.unsqueeze(0)
+    known_feats = known_feats.unsqueeze(0).permute(0, 2, 1).contiguous()
     dist, idx = three_nn(unknown, known)
     dist_recip = 1.0 / (dist + 1e-8)
     norm = torch.sum(dist_recip, dim=1, keepdim=True)
     weight = dist_recip / norm
     interpolated_feats = three_interpolate(known_feats, idx, weight)
-    interpolated_feats=interpolated_feats.permute(0,2,1).contiguous().squeeze(0)
+    interpolated_feats = interpolated_feats.permute(0, 2,
+                                                    1).contiguous().squeeze(0)
     return interpolated_feats
 
 
@@ -241,5 +253,6 @@ def tensor2points(tensor, offset=(0., -40., -3.), voxel_size=(.05, .05, .1)):
     indices = tensor.indices.float()  #coordinate
     offset = torch.Tensor(offset).to(indices.device)
     voxel_size = torch.Tensor(voxel_size).to(indices.device)
-    indices[:, 1:] = indices[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size
+    indices[:,
+            1:] = indices[:, [3, 2, 1]] * voxel_size + offset + .5 * voxel_size
     return tensor.features, indices

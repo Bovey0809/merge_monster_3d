@@ -70,27 +70,20 @@ class SparseEncoderV2(nn.Module):
         #     self.activation_fcn())
 
     def forward(self, voxel_features, coors, batch_size):
-        # coors[:, 1] += 1
+        # coors[:, 1] += 1 TODO We should add assertion for sparseconvtensor.
         coors = coors.int()
         x = spconv.SparseConvTensor(voxel_features, coors, self.sparse_shape,
                                     batch_size)
-        # t = time.time()
+
         x0 = self.conv0(x)
         x0 = self.down0(x0)
 
         x1 = self.conv1(x0)
         x1 = self.down1(x1)
-        x2 = self.conv2(x1)
-        # xconv2=spconv.SparseConvTensor(x2.features.clone(),x2.indices,x2.spatial_shape,x2.batch_size)
-        # xconv2.indice_dict=x2.indice_dict
-        # xconv2.grid=x2.grid
-        # xconv2=self.down2extra(xconv2)
-        # xconv2=xconv2.dense()
-        # N1,C1,D1,H1,W1=xconv2.shape
-        # xconv2=xconv2.view(N1,C1*D1,H1,W1)
-        # xconv2=self.conv2d(xconv2)
 
+        x2 = self.conv2(x1)
         x2 = self.down2(x2)
+
         x3 = self.conv3(x2)
         x3 = self.down3(x3)
 
@@ -98,7 +91,4 @@ class SparseEncoderV2(nn.Module):
 
         N, C, D, H, W = ret.shape
         ret = ret.view(N, C * D, H, W)
-
-        # print("ret shape",ret.shape)
-        # print("xconv2",xconv2.shape)
         return ret

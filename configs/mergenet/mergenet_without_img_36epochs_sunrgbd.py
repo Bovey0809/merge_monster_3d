@@ -8,8 +8,8 @@ class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
 num_class = len(class_names)
-point_cloud_range = [-7.08, -0.6, -7.5, 7, 9.0, 4.5]  # xyzxyz to voxilize
-voxel_size = [0.01, 0.006, 0.3]  # For Loss and Gt calculation
+point_cloud_range = [-6.9, -4.8, -0.1, 6.6, 7.6, 9.0]  # xyzxyz to voxilize
+voxel_size = [0.1, 0.1, 0.1]  # For Loss and Gt calculation
 
 # use caffe img_norm
 img_norm_cfg = dict(
@@ -25,37 +25,26 @@ model = dict(
         point_cloud_range=point_cloud_range,
         voxel_size=voxel_size,
         max_voxels=(
-            16000,  # if training, max_voxels[0],
-            20000)),  #  else max_voxels[1]
+            50000,  # if training, max_voxels[0],
+            50000)),  #  else max_voxels[1]
     voxel_encoder=dict(type='HardSimpleVFE'),
+    middle_encoder=dict(
+        type='SparseEncoder',
+        in_channels=4,
+        sparse_shape=[91, 124, 135],  # z y x
+        base_channels=16,
+        output_channels=128,
+        encoder_channels=((16, ), (16, 16, 16), (16, 16, 16)),
+        encoder_paddings=((1, ), (1, 1, 1), (0, 0, 0)),
+        block_type='conv_module'),  # 
     backbone=dict(
         type='SECONDFPNDCN',
-        in_channels=128,
+        in_channels=1280,
         layer_nums=[3],
         layer_strides=[1],
         num_filters=[128],
         upsample_strides=[2],
         out_channels=[128]),
-    pts_backbone=dict(
-        type='PointNet2SASSG',
-        in_channels=4,
-        num_points=(2048, 1024, 512, 256),  # points for SAMPLER.
-        radius=(0.2, 0.4, 0.8, 1.2),
-        num_samples=(64, 32, 16, 16),
-        sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
-                     (128, 128, 256)),
-        fp_channels=((256, 256), (256, 256)),
-        norm_cfg=dict(type='BN2d'),
-        sa_cfg=dict(
-            type='PointSAModule',
-            pool_mod='max',
-            use_xyz=True,
-            normalize_xyz=True)),
-    middle_encoder=dict(
-        type='SparseEncoderV2',
-        in_channels=4,
-        sparse_shape=[40, 1600, 1408],
-        out_channels=320),
     bbox_head=dict(
         type='Center3DHead',
         num_classes=num_class,
